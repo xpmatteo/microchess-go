@@ -37,22 +37,22 @@ Before writing any Go code, thoroughly document how the original MicroChess work
 
 ---
 
-### Phase 2: Board Display (First Demo!)
+### ✅ Phase 2: Board Display (First Demo!) - COMPLETED
 
 **Goal**: Create a program that displays a chess board
 
 **What You Can Demo**: Run the program and see a pretty chess board!
 
 **Tasks**:
-1. Create Go module structure
-2. Implement basic types:
+- [x] Create Go module structure
+- [x] Implement basic types:
    ```go
    type Square uint8
    type Piece uint8
    ```
-3. Implement board state with initial position
-4. Create CLI that displays the board (like POUT)
-5. Add 'Q' command to quit
+- [x] Implement board state with initial position
+- [x] Create CLI that displays the board (like POUT)
+- [x] Add 'Q' command to quit
 
 **Demo Commands**:
 ```bash
@@ -81,27 +81,27 @@ MicroChess (c) 1976-2025 Peter Jennings
 ```
 
 **Deliverables**:
-- Working Go module
-- Basic types (Square, Piece, GameState)
-- Board display function
-- Simple REPL loop
-- README with how to run
-- **Can demo**: Shows a chess board!
+- [x] Working Go module
+- [x] Basic types (Square, Piece, GameState)
+- [x] Board display function
+- [x] Simple REPL loop
+- [x] README with how to run
+- [x] **Can demo**: Shows a chess board!
 
 ---
 
-### Phase 3: Board Setup and Reset (Interactive Demo!)
+### ⬜ Phase 3: Board Setup and Reset (Interactive Demo!)
 
 **Goal**: Add 'C' command to reset board, 'E' command to flip it
 
 **What You Can Demo**: Interact with the board - reset it, flip perspective!
 
 **Tasks**:
-1. Implement REVERSE routine
-2. Implement board setup from InitialSetup
-3. Add 'C' command (setup)
-4. Add 'E' command (reverse)
-5. Track reversed state
+- [ ] Implement REVERSE routine
+- [ ] Implement board setup from InitialSetup
+- [ ] Add 'C' command (setup)
+- [ ] Add 'E' command (reverse)
+- [ ] Track reversed state
 
 **Demo Commands**:
 ```bash
@@ -119,14 +119,14 @@ go run cmd/microchess/main.go
 - REV flag toggling
 
 **Deliverables**:
-- REVERSE implementation
-- Setup board function
-- Command dispatcher (C, E, Q)
-- **Can demo**: Interactive board manipulation!
+- [ ] REVERSE implementation
+- [ ] Setup board function
+- [ ] Command dispatcher (C, E, Q)
+- [ ] **Can demo**: Interactive board manipulation!
 
 ---
 
-### Phase 4: Move Entry and Display (Manual Chess!)
+### ⬜ Phase 4: Move Entry and Display (Manual Chess!)
 
 **Goal**: Enter and display moves (no validation yet)
 
@@ -167,7 +167,7 @@ go run cmd/microchess/main.go
 
 ---
 
-### Phase 5: Legal Move Generation (Show All Moves!)
+### ⬜ Phase 5: Legal Move Generation (Show All Moves!)
 
 **Goal**: Generate and display all legal moves for a position
 
@@ -210,7 +210,7 @@ go run cmd/microchess/main.go
 
 ---
 
-### Phase 6: Undo Moves (Time Travel Chess!)
+### ⬜ Phase 6: Undo Moves (Time Travel Chess!)
 
 **Goal**: Add move undo capability
 
@@ -253,7 +253,7 @@ go run cmd/microchess/main.go
 
 ---
 
-### Phase 7: Position Evaluation (Show Me the Score!)
+### ⬜ Phase 7: Position Evaluation (Show Me the Score!)
 
 **Goal**: Evaluate positions and show scores
 
@@ -299,7 +299,7 @@ go run cmd/microchess/main.go
 
 ---
 
-### Phase 8: Single-Ply Search (Computer Suggests Move!)
+### ⬜ Phase 8: Single-Ply Search (Computer Suggests Move!)
 
 **Goal**: Computer suggests best move (1-ply search)
 
@@ -342,7 +342,7 @@ go run cmd/microchess/main.go
 
 ---
 
-### Phase 9: Full Computer Player (Computer Plays!)
+### ⬜ Phase 9: Full Computer Player (Computer Plays!)
 
 **Goal**: Computer can play a full game
 
@@ -391,7 +391,7 @@ go run cmd/microchess/main.go
 
 ---
 
-### Phase 10: Polish and Performance (Fast Computer!)
+### ⬜ Phase 10: Polish and Performance (Fast Computer!)
 
 **Goal**: Optimize and improve user experience
 
@@ -436,7 +436,7 @@ go run cmd/microchess/main.go
 
 ---
 
-### Phase 11: Testing and Validation
+### ⬜ Phase 11: Testing and Validation
 
 **Goal**: Verify correctness against original
 
@@ -474,7 +474,7 @@ go run cmd/validate/main.go
 
 ---
 
-### Phase 12: Documentation and Examples
+### ⬜ Phase 12: Documentation and Examples
 
 **Goal**: Complete documentation and examples
 
@@ -1197,16 +1197,16 @@ These improve understandability:
 
 The port is successful when:
 
-1. ✅ All documentation complete and accurate
-2. ⬜ All unit tests pass
-3. ⬜ Move generation matches assembly output
-4. ⬜ Evaluation scores match for test positions
-5. ⬜ Opening book plays identical moves
-6. ⬜ Computer selects same moves as original
-7. ⬜ CLI interface is functional and user-friendly
-8. ⬜ Code is well-commented and understandable
-9. ⬜ README provides complete usage guide
-10. ⬜ Project achieves goal: makes historic program understandable
+1. [x] All documentation complete and accurate
+2. [ ] All unit tests pass
+3. [ ] Move generation matches assembly output
+4. [ ] Evaluation scores match for test positions
+5. [ ] Opening book plays identical moves
+6. [ ] Computer selects same moves as original
+7. [ ] CLI interface is functional and user-friendly
+8. [ ] Code is well-commented and understandable
+9. [ ] README provides complete usage guide
+10. [ ] Project achieves goal: makes historic program understandable
 
 ---
 
@@ -1247,29 +1247,6 @@ The goal is not to make a "better" chess engine, but to make **this specific his
 - **Commands**: doc/COMMANDS.md
 - **Call Graphs**: doc/CALL_GRAPH.md
 - **6502 Reference**: doc/6502-instruction-set.md
-
----
-
-## Timeline Estimate
-
-**New demo-driven approach** - each phase delivers something runnable!
-
-- Phase 1: ✅ Complete (4 documentation files)
-- Phase 2: 0.5 day (board display - first demo!)
-- Phase 3: 0.5 day (board manipulation - interactive!)
-- Phase 4: 1 day (move entry - manual chess!)
-- Phase 5: 2 days (move generation - legal moves!)
-- Phase 6: 1 day (undo - time travel!)
-- Phase 7: 1.5 days (evaluation - show scores!)
-- Phase 8: 1 day (hint system - computer suggests!)
-- Phase 9: 2 days (computer player - full AI!)
-- Phase 10: 1.5 days (polish - production ready!)
-- Phase 11: 2 days (testing/validation)
-- Phase 12: 1 day (final documentation and examples)
-
-**Total**: ~14 days of focused development
-
-**Key Advantage**: Can demo progress at end of each phase instead of waiting until the end!
 
 ---
 
