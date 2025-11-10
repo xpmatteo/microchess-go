@@ -15,20 +15,23 @@ func TestNewGame(t *testing.T) {
 		t.Fatal("NewGame() returned nil")
 	}
 
-	// Verify white pieces are in starting positions
-	if game.Board[PieceKing] != 0x03 {
-		t.Errorf("White king position = 0x%02X, want 0x03", game.Board[PieceKing])
-	}
-	if game.Board[PieceQueen] != 0x04 {
-		t.Errorf("White queen position = 0x%02X, want 0x04", game.Board[PieceQueen])
+	// NewGame() should start with empty board (matching original assembly behavior)
+	// Only one black pawn at 00 (the "garbage" state)
+	if game.BK[8] != 0x00 {
+		t.Errorf("Black pawn 1 position = 0x%02X, want 0x00", game.BK[8])
 	}
 
-	// Verify black pieces are in starting positions
-	if game.BK[PieceKing] != 0x73 {
-		t.Errorf("Black king position = 0x%02X, want 0x73", game.BK[PieceKing])
-	}
-	if game.BK[PieceQueen] != 0x74 {
-		t.Errorf("Black queen position = 0x%02X, want 0x74", game.BK[PieceQueen])
+	// All other pieces should be off-board (0xFF)
+	for i := Piece(0); i < 16; i++ {
+		if i == 8 {
+			continue // Skip the one black pawn we set
+		}
+		if game.Board[i] != 0xFF {
+			t.Errorf("White piece %d should be off-board (0xFF), got 0x%02X", i, game.Board[i])
+		}
+		if i != 8 && game.BK[i] != 0xFF {
+			t.Errorf("Black piece %d should be off-board (0xFF), got 0x%02X", i, game.BK[i])
+		}
 	}
 
 	if game.Reversed {
@@ -72,6 +75,7 @@ func TestSetupBoard(t *testing.T) {
 
 func TestFindPieceAt(t *testing.T) {
 	game := NewGame()
+	game.SetupBoard() // Setup the board first
 
 	tests := []struct {
 		square  board.Square

@@ -99,24 +99,27 @@ go run cmd/microchess/main.go
 # Press Q to quit
 ```
 
-**Output**:
+**Output** (matching original 6502 assembly behavior):
 ```
-MicroChess (c) 1976-2025 Peter Jennings
+MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
  00 01 02 03 04 05 06 07
 -------------------------
-|WR WN WB WQ WK WB WN WR|70
-|WP WP WP WP WP WP WP WP|60
-| *  *  *  *  *  *  *  *|50
-|  *  *  *  *  *  *  * *|40
-| *  *  *  *  *  *  *  *|30
-|  *  *  *  *  *  *  * *|20
-|BP BP BP BP BP BP BP BP|10
-|BR BN BB BQ BK BB BN BR|00
+|BP|**|  |**|  |**|  |**|00
+|**|  |**|  |**|  |**|  |10
+|  |**|  |**|  |**|  |**|20
+|**|  |**|  |**|  |**|  |30
+|  |**|  |**|  |**|  |**|40
+|**|  |**|  |**|  |**|  |50
+|  |**|  |**|  |**|  |**|60
+|**|  |**|  |**|  |**|  |70
 -------------------------
  00 01 02 03 04 05 06 07
+00 00 00
 
 ? _
 ```
+
+Note: The original starts with an "uninitialized" board showing just one black pawn. The 'C' command is needed to set up pieces.
 
 **Deliverables**:
 - [x] Working Go module
@@ -128,7 +131,7 @@ MicroChess (c) 1976-2025 Peter Jennings
 
 ---
 
-### ⬜ Phase 3: Board Setup and Reset (Interactive Demo!)
+### ✅ Phase 3: Board Setup and Reset (Interactive Demo!)
 
 **Goal**: Add 'C' command to reset board, 'E' command to flip it
 
@@ -136,31 +139,32 @@ MicroChess (c) 1976-2025 Peter Jennings
 
 **Tasks**:
 - [ ] Implement REVERSE routine
-- [ ] Implement board setup from InitialSetup
-- [ ] Add 'C' command (setup)
+- [x] Implement board setup from InitialSetup
+- [x] Add 'C' command (setup)
 - [ ] Add 'E' command (reverse)
-- [ ] Track reversed state
+- [x] Track reversed state
 
 **Demo Commands**:
 ```bash
 go run cmd/microchess/main.go
-? C              # Setup board (shows "CCC")
-? E              # Reverse board (shows "EEE")
-? E              # Reverse back
+? C              # Setup board (shows "CC CC CC")
+? E              # Reverse board (shows "EE EE EE") - NOT YET IMPLEMENTED
+? E              # Reverse back - NOT YET IMPLEMENTED
 ? Q              # Quit
 ```
 
-**What It Shows**:
-- Board resets to initial position
-- Board flips between white/black perspective
-- Coordinate transformation working (0x77 - square)
-- REV flag toggling
+**What It Shows** (partially complete):
+- ✅ Board resets to initial position
+- ✅ LED display shows "CC CC CC" after setup
+- ⬜ Board flips between white/black perspective (E command not yet implemented)
+- ⬜ Coordinate transformation working (0x77 - square)
+- ✅ REV flag tracked in GameState
 
 **Deliverables**:
-- [ ] REVERSE implementation
-- [ ] Setup board function
-- [ ] Command dispatcher (C, E, Q)
-- [ ] **Can demo**: Interactive board manipulation!
+- [ ] REVERSE implementation (remaining)
+- [x] Setup board function (complete)
+- [x] Command dispatcher (C, Q implemented; E remaining)
+- [ ] **Can demo**: Interactive board manipulation (C works, E pending)
 
 ---
 

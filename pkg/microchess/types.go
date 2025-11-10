@@ -49,6 +49,10 @@ type GameState struct {
 	// REV tracks if board is reversed (0 = white's view, non-zero = black's view)
 	// Assembly: $70 (REV flag)
 	Reversed bool
+
+	// LED display values (shown at bottom of board)
+	// Assembly: $F9, $FA, $FB (DIS1, DIS2, DIS3)
+	DIS1, DIS2, DIS3 uint8
 }
 
 // InitialSetup contains the starting positions for all pieces.
@@ -67,10 +71,20 @@ var InitialSetup = [32]board.Square{
 	0x60, 0x67, 0x61, 0x66, 0x62, 0x65, 0x64, 0x63,
 }
 
-// NewGame creates a new game with the initial position set up.
+// NewGame creates a new game with an empty board state.
+// The board must be initialized with SetupBoard() (via 'C' command) before play.
+// This matches the original assembly behavior where the board is uninitialized at startup.
 func NewGame() *GameState {
 	g := &GameState{}
-	g.SetupBoard()
+	// Initialize boards with off-board sentinel values (0xFF)
+	// This simulates the uninitialized state of the original
+	for i := 0; i < 16; i++ {
+		g.Board[i] = 0xFF // Off-board position
+		g.BK[i] = 0xFF
+	}
+	// However, to match the original's display, put one black pawn at 00
+	// This is the "garbage" state the original shows
+	g.BK[8] = 0x00 // Black pawn at position 00
 	return g
 }
 
@@ -118,7 +132,7 @@ func GetPieceChar(piece Piece, isWhite bool) string {
 
 // FindPieceAt returns which piece (if any) is at the given square.
 // Returns the piece index and true if found, or NoPiece and false if empty.
-func (g *GameState) FindPieceAt(sq board.Square) (Piece, bool, bool) {
+func (g *GameState) FindPieceAt(sq board.Square) (piece Piece, found bool, isWhite bool) {
 	// Check white pieces (current board)
 	for i := Piece(0); i < 16; i++ {
 		if g.Board[i] == sq {

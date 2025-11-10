@@ -42,31 +42,47 @@ go run cmd/microchess/main.go
 
 ## Current Features
 
-The program currently displays the initial chess position and accepts the following command:
+The program starts with an empty board (matching the original 6502 assembly behavior) and accepts:
 
+- **C** - Setup the board to initial chess position
 - **Q** - Quit the program
 
 ## Example Session
 
 ```
 $ ./microchess
-MicroChess (c) 1976-2025 Peter Jennings
+MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
+ 00 01 02 03 04 05 06 07
+-------------------------
+|BP|**|  |**|  |**|  |**|00
+|**|  |**|  |**|  |**|  |10
+|  |**|  |**|  |**|  |**|20
+|**|  |**|  |**|  |**|  |30
+|  |**|  |**|  |**|  |**|40
+|**|  |**|  |**|  |**|  |50
+|  |**|  |**|  |**|  |**|60
+|**|  |**|  |**|  |**|  |70
+-------------------------
+ 00 01 02 03 04 05 06 07
+00 00 00
 
+? C
+MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
  00 01 02 03 04 05 06 07
 -------------------------
-|BR BN BB BQ BK BB BN BR|70
-|BP BP BP BP BP BP BP BP|60
-| *  *  *  *  *  *  *  *|50
-|  *  *  *  *  *  *  * *|40
-| *  *  *  *  *  *  *  *|30
-|  *  *  *  *  *  *  * *|20
-|WP WP WP WP WP WP WP WP|10
-|WR WN WB WQ WK WB WN WR|00
+|WR|WN|WB|WK|WQ|WB|WN|WR|00
+|WP|WP|WP|WP|WP|WP|WP|WP|10
+|  |**|  |**|  |**|  |**|20
+|**|  |**|  |**|  |**|  |30
+|  |**|  |**|  |**|  |**|40
+|**|  |**|  |**|  |**|  |50
+|BP|BP|BP|BP|BP|BP|BP|BP|60
+|BR|BN|BB|BK|BQ|BB|BN|BR|70
 -------------------------
  00 01 02 03 04 05 06 07
+CC CC CC
 
 ? Q
-Goodbye!
 ```
 
 ## Testing
