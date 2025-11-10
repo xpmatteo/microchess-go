@@ -140,3 +140,4 @@ This allows direct comparison between the original 6502 code and the Go port!
 - Test opening book sequences
 - **Compare game play to original running in go6502 emulator**
 - Feed identical inputs to both implementations and verify identical outputs
+- use stretchr/testify for assertions

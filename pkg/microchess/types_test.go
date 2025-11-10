@@ -7,36 +7,29 @@ import (
 	"testing"
 
 	"github.com/matteo/microchess-go/pkg/board"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewGame(t *testing.T) {
 	game := NewGame()
-	if game == nil {
-		t.Fatal("NewGame() returned nil")
-	}
+	assert.NotNil(t, game, "NewGame() should not return nil")
 
 	// NewGame() should start with empty board (matching original assembly behavior)
 	// Only one black pawn at 00 (the "garbage" state)
-	if game.BK[8] != 0x00 {
-		t.Errorf("Black pawn 1 position = 0x%02X, want 0x00", game.BK[8])
-	}
+	assert.Equal(t, board.Square(0x00), game.BK[8], "Black pawn 1 should be at position 0x00")
 
 	// All other pieces should be off-board (0xFF)
 	for i := Piece(0); i < 16; i++ {
 		if i == 8 {
 			continue // Skip the one black pawn we set
 		}
-		if game.Board[i] != 0xFF {
-			t.Errorf("White piece %d should be off-board (0xFF), got 0x%02X", i, game.Board[i])
-		}
-		if i != 8 && game.BK[i] != 0xFF {
-			t.Errorf("Black piece %d should be off-board (0xFF), got 0x%02X", i, game.BK[i])
+		assert.Equal(t, board.Square(0xFF), game.Board[i], "White piece %d should be off-board (0xFF)", i)
+		if i != 8 {
+			assert.Equal(t, board.Square(0xFF), game.BK[i], "Black piece %d should be off-board (0xFF)", i)
 		}
 	}
 
-	if game.Reversed {
-		t.Error("New game should not be reversed")
-	}
+	assert.False(t, game.Reversed, "New game should not be reversed")
 }
 
 func TestSetupBoard(t *testing.T) {
@@ -54,9 +47,7 @@ func TestSetupBoard(t *testing.T) {
 	}
 
 	for piece, expected := range expectedWhite {
-		if game.Board[piece] != expected {
-			t.Errorf("White piece %d position = 0x%02X, want 0x%02X", piece, game.Board[piece], expected)
-		}
+		assert.Equal(t, expected, game.Board[piece], "White piece %d position", piece)
 	}
 
 	expectedBlack := map[Piece]board.Square{
@@ -67,9 +58,7 @@ func TestSetupBoard(t *testing.T) {
 	}
 
 	for piece, expected := range expectedBlack {
-		if game.BK[piece] != expected {
-			t.Errorf("Black piece %d position = 0x%02X, want 0x%02X", piece, game.BK[piece], expected)
-		}
+		assert.Equal(t, expected, game.BK[piece], "Black piece %d position", piece)
 	}
 }
 
@@ -78,51 +67,51 @@ func TestFindPieceAt(t *testing.T) {
 	game.SetupBoard() // Setup the board first
 
 	tests := []struct {
+		name    string
 		square  board.Square
 		piece   Piece
 		found   bool
 		isWhite bool
 	}{
-		{0x03, PieceKing, true, true},    // White king on d1
-		{0x04, PieceQueen, true, true},   // White queen on e1
-		{0x73, PieceKing, true, false},   // Black king on d8
-		{0x34, NoPiece, false, false},    // Empty square e4
-		{0x44, NoPiece, false, false},    // Empty square e5
+		{"white king on d1", 0x03, PieceKing, true, true},
+		{"white queen on e1", 0x04, PieceQueen, true, true},
+		{"black king on d8", 0x73, PieceKing, true, false},
+		{"empty square e4", 0x34, NoPiece, false, false},
+		{"empty square e5", 0x44, NoPiece, false, false},
 	}
 
 	for _, tt := range tests {
-		piece, found, isWhite := game.FindPieceAt(tt.square)
-		if found != tt.found {
-			t.Errorf("FindPieceAt(0x%02X) found = %v, want %v", tt.square, found, tt.found)
-		}
-		if found && piece != tt.piece {
-			t.Errorf("FindPieceAt(0x%02X) piece = %d, want %d", tt.square, piece, tt.piece)
-		}
-		if found && isWhite != tt.isWhite {
-			t.Errorf("FindPieceAt(0x%02X) isWhite = %v, want %v", tt.square, isWhite, tt.isWhite)
-		}
+		t.Run(tt.name, func(t *testing.T) {
+			piece, found, isWhite := game.FindPieceAt(tt.square)
+			assert.Equal(t, tt.found, found, "FindPieceAt(0x%02X) found", tt.square)
+			if found {
+				assert.Equal(t, tt.piece, piece, "FindPieceAt(0x%02X) piece", tt.square)
+				assert.Equal(t, tt.isWhite, isWhite, "FindPieceAt(0x%02X) isWhite", tt.square)
+			}
+		})
 	}
 }
 
 func TestGetPieceChar(t *testing.T) {
 	tests := []struct {
+		name    string
 		piece   Piece
 		isWhite bool
 		want    string
 	}{
-		{PieceKing, true, "WK"},
-		{PieceKing, false, "BK"},
-		{PieceQueen, true, "WQ"},
-		{PieceRook1, true, "WR"},
-		{PieceBishop2, false, "BB"},
-		{PieceKnight1, true, "WN"},
-		{PiecePawn1, false, "BP"},
+		{"white king", PieceKing, true, "WK"},
+		{"black king", PieceKing, false, "BK"},
+		{"white queen", PieceQueen, true, "WQ"},
+		{"white rook", PieceRook1, true, "WR"},
+		{"black bishop", PieceBishop2, false, "BB"},
+		{"white knight", PieceKnight1, true, "WN"},
+		{"black pawn", PiecePawn1, false, "BP"},
 	}
 
 	for _, tt := range tests {
-		got := GetPieceChar(tt.piece, tt.isWhite)
-		if got != tt.want {
-			t.Errorf("GetPieceChar(%d, %v) = %q, want %q", tt.piece, tt.isWhite, got, tt.want)
-		}
+		t.Run(tt.name, func(t *testing.T) {
+			got := GetPieceChar(tt.piece, tt.isWhite)
+			assert.Equal(t, tt.want, got, "GetPieceChar(%d, %v)", tt.piece, tt.isWhite)
+		})
 	}
 }
