@@ -131,40 +131,45 @@ Note: The original starts with an "uninitialized" board showing just one black p
 
 ---
 
-### ✅ Phase 3: Board Setup and Reset (Interactive Demo!)
+### ✅ Phase 3: Board Setup and Reset (Interactive Demo!) - COMPLETED
 
 **Goal**: Add 'C' command to reset board, 'E' command to flip it
 
 **What You Can Demo**: Interact with the board - reset it, flip perspective!
 
 **Tasks**:
-- [ ] Implement REVERSE routine
+- [x] Implement REVERSE routine
 - [x] Implement board setup from InitialSetup
 - [x] Add 'C' command (setup)
-- [ ] Add 'E' command (reverse)
+- [x] Add 'E' command (reverse)
 - [x] Track reversed state
 
 **Demo Commands**:
 ```bash
 go run cmd/microchess/main.go
 ? C              # Setup board (shows "CC CC CC")
-? E              # Reverse board (shows "EE EE EE") - NOT YET IMPLEMENTED
-? E              # Reverse back - NOT YET IMPLEMENTED
+? E              # Reverse board (shows "EE EE EE")
+? E              # Reverse back
 ? Q              # Quit
 ```
 
-**What It Shows** (partially complete):
+**What It Shows**:
 - ✅ Board resets to initial position
 - ✅ LED display shows "CC CC CC" after setup
-- ⬜ Board flips between white/black perspective (E command not yet implemented)
-- ⬜ Coordinate transformation working (0x77 - square)
+- ✅ Board flips between white/black perspective
+- ✅ Coordinate transformation working (0x77 - square)
 - ✅ REV flag tracked in GameState
+- ✅ Double reverse restores original position
 
 **Deliverables**:
-- [ ] REVERSE implementation (remaining)
+- [x] REVERSE implementation (pkg/microchess/types.go:160)
 - [x] Setup board function (complete)
-- [x] Command dispatcher (C, Q implemented; E remaining)
-- [ ] **Can demo**: Interactive board manipulation (C works, E pending)
+- [x] Command dispatcher (C, E, Q all implemented)
+- [x] Unit tests (TestReverse, TestHandleCommandE)
+- [x] Acceptance tests (TestReverseCommand, TestSetupReverseAndQuitSequence)
+- [x] **Can demo**: Interactive board manipulation works perfectly!
+
+**Status**: Complete - All functionality implemented and tested
 
 ---
 

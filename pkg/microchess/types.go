@@ -136,20 +136,52 @@ func GetPieceChar(piece Piece, isWhite bool) string {
 
 // FindPieceAt returns which piece (if any) is at the given square.
 // Returns the piece index and true if found, or NoPiece and false if empty.
+// The isWhite flag indicates the COLOR TO DISPLAY (which depends on Reversed flag).
+//
+// In the original assembly (POUT line 750), when REV flag is set, it uses different
+// color characters (cpl+16 vs cpl) to flip white<->black display.
 func (g *GameState) FindPieceAt(sq board.Square) (piece Piece, found bool, isWhite bool) {
-	// Check white pieces (current board)
+	// Check pieces in BOARD array
 	for i := Piece(0); i < 16; i++ {
 		if g.Board[i] == sq {
-			return i, true, true // piece, found, isWhite
+			// BOARD pieces are displayed as WHITE when REV=0, BLACK when REV!=0
+			// This matches assembly line 750: REV flag determines color character used
+			return i, true, !g.Reversed // piece, found, isWhite=(REV==0)
 		}
 	}
-	// Check black pieces (alternate board)
+	// Check pieces in BK array
 	for i := Piece(0); i < 16; i++ {
 		if g.BK[i] == sq {
-			return i, true, false // piece, found, isBlack
+			// BK pieces are displayed as BLACK when REV=0, WHITE when REV!=0
+			return i, true, g.Reversed // piece, found, isWhite=(REV!=0)
 		}
 	}
 	return NoPiece, false, false
+}
+
+// Reverse flips the board perspective by swapping Board and BK arrays
+// and transforming all coordinates: new = 0x77 - old.
+// This allows the engine to analyze the position from the opponent's perspective.
+//
+// Reference: REVERSE routine (assembly line 382)
+func (g *GameState) Reverse() {
+	// The assembly performs this transformation for X = 0x0F down to 0x00:
+	//   temp = BK[X]
+	//   BK[X] = 0x77 - Board[X]
+	//   Board[X] = 0x77 - temp
+	// This simultaneously swaps the arrays and transforms coordinates
+
+	for i := 15; i >= 0; i-- {
+		// Save BK[i]
+		temp := g.BK[i]
+		// Transform Board[i] and store in BK[i]
+		g.BK[i] = 0x77 - g.Board[i]
+		// Transform old BK[i] and store in Board[i]
+		g.Board[i] = 0x77 - temp
+	}
+
+	// Toggle the reversed flag
+	g.Reversed = !g.Reversed
 }
 
 // HandleCommand processes a single command and returns true if the program should continue.
@@ -170,9 +202,19 @@ func (g *GameState) HandleCommand(command string) bool {
 		g.Display()
 		return true
 
+	case "E":
+		// Reverse board perspective (REVERSE routine, line 382)
+		g.Reverse()
+		// Set LED display to "EE EE EE" to indicate reversal
+		g.DIS1 = 0xEE
+		g.DIS2 = 0xEE
+		g.DIS3 = 0xEE
+		g.Display()
+		return true
+
 	default:
 		fmt.Println("Unknown command:", command)
-		fmt.Println("Available commands: C (setup), Q (quit)")
+		fmt.Println("Available commands: C (setup), E (reverse), Q (quit)")
 		return true
 	}
 }
