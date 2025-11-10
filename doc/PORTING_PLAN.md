@@ -37,6 +37,44 @@ Before writing any Go code, thoroughly document how the original MicroChess work
 
 ---
 
+### ✅ Phase 1.5: 6502 Emulator Setup (BONUS!) - COMPLETED
+
+**Goal**: Run the original 1976 assembly code with real I/O for validation
+
+**What You Can Demo**: The actual original 6502 MicroChess running and playable!
+
+**Achievement**: Successfully set up go6502 emulator with custom I/O support to run the original assembly code.
+
+**Files Created**:
+- `go6502/iomem.go` - Custom Memory implementation with console I/O
+- `go6502/testrun.go` - Simple harness to run 6502 programs
+- `go6502/microchess.asm` - Modified to use memory-mapped I/O ($FFF0/$FFF1)
+- `go6502/microchess.bin` - Assembled binary (1.4KB!)
+- `go6502/RUNNING_MICROCHESS.md` - Complete documentation
+
+**How to Run**:
+```bash
+cd go6502
+go run testrun.go iomem.go microchess.bin
+# Type 'C' to setup, 'P' for computer move
+```
+
+**Technical Achievement**:
+- Implemented Memory interface with I/O hooks at $FFF0 (output) and $FFF1 (input)
+- Modified original ACIA serial routines to use simple memory-mapped I/O
+- Minimal changes to assembly (just 3 simple routines)
+- Full console I/O working - can see board, enter moves, play games!
+
+**Why This Matters**:
+- **Validation**: Can now compare Go port directly to running original
+- **Reference**: Can trace execution, examine state, debug differences
+- **Historical**: Preserves ability to run original code exactly as written
+- **Testing**: Feed identical inputs to both versions, verify identical behavior
+
+**Status**: Complete - Original 1976 MicroChess is now runnable!
+
+---
+
 ### ✅ Phase 2: Board Display (First Demo!) - COMPLETED
 
 **Goal**: Create a program that displays a chess board
@@ -440,37 +478,59 @@ go run cmd/microchess/main.go
 
 **Goal**: Verify correctness against original
 
-**What You Can Demo**: Side-by-side comparison with original!
+**What You Can Demo**: Side-by-side comparison with original running in emulator!
 
-**Tasks**:
-1. Create test positions suite
-2. Compare move generation with original
+**BREAKTHROUGH**: We can now run the original 1976 6502 assembly code with real I/O in the go6502 emulator! See `go6502/RUNNING_MICROCHESS.md` for details.
+
+**Running the Original**:
+```bash
+cd go6502
+go run testrun.go iomem.go microchess.bin
+# Type 'C' to set up board, 'P' for computer move
+```
+
+**How It Works**:
+- Custom Memory implementation (`iomem.go`) with I/O at $FFF0 (output) and $FFF1 (input)
+- Modified MicroChess to use memory-mapped I/O instead of ACIA serial port
+- Simple test harness (`testrun.go`) runs 6502 programs with console I/O
+
+**Validation Tasks**:
+1. Set up identical positions in both original and Go port
+2. Compare move generation with original emulated code
 3. Compare evaluation scores
 4. Compare move selection
-5. Play test games
-6. Document any differences
+5. Feed identical inputs to both versions
+6. Verify identical outputs
+7. Play test games side-by-side
+8. Document any differences
 
 **Demo**:
 ```bash
+# Run the original 6502 code
+cd go6502
+echo "C" | go run testrun.go iomem.go microchess.bin
+
 # Run validation suite
+cd ..
 go test ./... -v
+
 # Run comparison tool
 go run cmd/validate/main.go
 # Compare move generation:
 # Position: rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR
-# Original: 20 moves
-# Go port:  20 moves ✓
+# Original (6502): 20 moves
+# Go port:         20 moves ✓
 # Evaluation:
-# Original: 128
-# Go port:  128 ✓
+# Original (6502): 128
+# Go port:         128 ✓
 ```
 
 **Deliverables**:
 - Comprehensive test suite
-- Validation tool
+- Validation tool comparing Go port to running 6502 emulator
 - Comparison reports
 - Bug fixes
-- **Can demo**: Proof of correctness!
+- **Can demo**: Proof of correctness against actual running 6502 code!
 
 ---
 
@@ -1247,6 +1307,8 @@ The goal is not to make a "better" chess engine, but to make **this specific his
 - **Commands**: doc/COMMANDS.md
 - **Call Graphs**: doc/CALL_GRAPH.md
 - **6502 Reference**: doc/6502-instruction-set.md
+- **Running Emulator**: go6502/RUNNING_MICROCHESS.md
+- **Emulator Code**: go6502/ directory (go6502 emulator with I/O support)
 
 ---
 

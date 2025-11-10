@@ -109,10 +109,34 @@ When reading the original code, understand these patterns:
 
 (To be added as Go port progresses)
 
+## Running the Original 6502 Code
+
+The original 1976 MicroChess assembly code can be run in the go6502 emulator with real I/O!
+
+**Location**: `go6502/` directory
+
+**Quick Start**:
+```bash
+cd go6502
+go run testrun.go iomem.go microchess.bin
+```
+
+Then type `C` to set up the board, `P` for computer move, or enter moves manually.
+
+**How It Works**:
+- `iomem.go` - Custom Memory implementation with console I/O at $FFF0 (output) and $FFF1 (input)
+- `testrun.go` - Simple harness to run 6502 programs
+- `microchess.asm` - Modified to use memory-mapped I/O instead of ACIA serial port
+
+**See**: `go6502/RUNNING_MICROCHESS.md` for complete details
+
+This allows direct comparison between the original 6502 code and the Go port!
+
 ## Testing Philosophy
 
 - Unit tests for each major routine
 - Verify move generation matches assembly
 - Validate evaluation scores
 - Test opening book sequences
-- Compare game play to original
+- **Compare game play to original running in go6502 emulator**
+- Feed identical inputs to both implementations and verify identical outputs
