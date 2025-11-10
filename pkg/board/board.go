@@ -56,7 +56,7 @@ func ParseSquare(str string) (Square, error) {
 	file := str[0] - 'a'
 	rank := str[1] - '1'
 
-	if file < 0 || file > 7 || rank < 0 || rank > 7 {
+	if file < 0 || file > 7 || rank < 0 || rank > 7 { // nolint:staticcheck
 		return 0, fmt.Errorf("square out of range: %s", str)
 	}
 
