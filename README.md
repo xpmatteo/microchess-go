@@ -93,13 +93,23 @@ Run the test suite:
 go test ./...
 ```
 
-All core types and board representation are covered by unit tests.
+The project includes:
+- **Unit tests** - Test individual components (board, types, etc.)
+- **Acceptance tests** - Test complete user workflows end-to-end
+
+Run only acceptance tests:
+```bash
+go test ./acceptance/...
+```
+
+All core types, board representation, and user commands are covered by tests.
 
 ## Architecture
 
 - **pkg/board/** - 0x88 board representation and Square type
-- **pkg/microchess/** - Core game types and state
-- **cmd/microchess/** - CLI interface
+- **pkg/microchess/** - Core game types, state, and command handling
+- **cmd/microchess/** - CLI interface (thin wrapper around GameState)
+- **acceptance/** - End-to-end acceptance tests
 
 ## Original Source
 
