@@ -23,39 +23,13 @@ This repository contains the 1976 MicroChess game by Peter Jennings and is worki
   - Complete instruction set with opcodes, addressing modes, cycle counts
   - Useful for understanding assembly idioms
 
-### Documentation (Phase 1 Complete)
+- **doc/microchess-manual.txt** - Original program manual from 1976
+  - Explains available command
+  - Data structures and variables
+  - Algorithm
 
-These documents explain the original program's workings:
 
-- **doc/DATA_STRUCTURES.md** - Complete data structure reference
-  - Page zero variable map ($50-$FF)
-  - 0x88 board encoding explanation
-  - Move stack structure
-  - Evaluation counters organization
-  - Opening book format
-
-- **doc/SUBROUTINES.md** - All major routines documented
-  - Move generation (GNM, CMOVE, piece handlers)
-  - Move execution (MOVE, UMOVE, REVERSE)
-  - Evaluation (COUNTS, TREE, STRATGY, CKMATE)
-  - Search (JANUS state machine, CHKCHK)
-  - Computer player (GO)
-  - Pseudocode algorithms
-
-- **doc/COMMANDS.md** - User interface reference
-  - All available commands (C, E, P, Enter, Q, 0-7)
-  - Move entry format
-  - Display format explanation
-  - Input masking details
-
-- **doc/CALL_GRAPH.md** - Visual flow diagrams
-  - Main program flow
-  - Move generation call graph
-  - STATE machine transitions
-  - Stack usage diagrams
-  - Evaluation flow
-
-### Go Port (Future Phases)
+### Go Port
 
 The Go port will be organized as:
 
@@ -107,26 +81,19 @@ When reading the original code, understand these patterns:
 
 ## Development Commands
 
-(To be added as Go port progresses)
+
 
 ## Running the Original 6502 Code
 
 The original 1976 MicroChess assembly code can be run in the go6502 emulator with real I/O!
 
-**Location**: `go6502/` directory
+Example:
 
-**Quick Start**:
 ```bash
-cd go6502
-go run testrun.go iomem.go microchess.bin
+printf 'CQ' | make play-6502
 ```
 
-Then type `C` to set up the board, `P` for computer move, or enter moves manually.
-
-**How It Works**:
-- `iomem.go` - Custom Memory implementation with console I/O at $FFF0 (output) and $FFF1 (input)
-- `testrun.go` - Simple harness to run 6502 programs
-- `microchess.asm` - Modified to use memory-mapped I/O instead of ACIA serial port
+This way we can see what is output by the original program in response to our input
 
 **See**: `go6502/RUNNING_MICROCHESS.md` for complete details
 
