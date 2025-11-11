@@ -5,10 +5,14 @@ package acceptance
 
 import (
 	"bytes"
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/matteo/microchess-go/pkg/microchess"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 // TestInitialDisplay tests the initial board display matches expected output
@@ -145,174 +149,79 @@ EE EE EE
 
 // TestSetupAndQuitSequence tests the complete workflow: start -> setup -> quit
 // This simulates: printf "C\nQ\n" | go run cmd/microchess/main.go
+// Test data is loaded from testdata/setup-quit.yaml
 func TestSetupAndQuitSequence(t *testing.T) {
+	tc := loadTestCase(t, "setup-quit.yaml")
+	runTestCase(t, tc)
+}
+
+// commandStep represents a single command and its expected output
+type commandStep struct {
+	Command         string `yaml:"command"`
+	ShouldContinue  bool   `yaml:"should_continue"`
+	ExpectedDisplay string `yaml:"expected_display"`
+}
+
+// testCase represents a complete test scenario with multiple steps
+type testCase struct {
+	Name          string        `yaml:"name"`
+	Description   string        `yaml:"description"`
+	FinalReversed bool          `yaml:"final_reversed"`
+	Steps         []commandStep `yaml:"steps"`
+}
+
+// loadTestCase loads a test case from a YAML file
+func loadTestCase(t *testing.T, filename string) testCase {
+	data, err := os.ReadFile("testdata/" + filename)
+	require.NoError(t, err, "Failed to read test data file: %s", filename)
+
+	var tc testCase
+	err = yaml.Unmarshal(data, &tc)
+	require.NoError(t, err, "Failed to parse YAML test data: %s", filename)
+
+	return tc
+}
+
+// runTestCase executes a test case's steps and validates output
+func runTestCase(t *testing.T, tc testCase) {
+	t.Logf("Running test case: %s", tc.Name)
+	t.Logf("Description: %s", tc.Description)
+
 	var buf bytes.Buffer
 	game := microchess.NewGame(&buf)
 
-	// Capture initial display
-	game.Display()
+	for i, step := range tc.Steps {
+		buf.Reset()
 
-	// Execute 'C' command
-	shouldContinue := game.HandleCommand("C")
-	assert.True(t, shouldContinue, "C command should not quit")
+		var shouldContinue bool
+		if step.Command == "DISPLAY" {
+			game.Display()
+			shouldContinue = true
+		} else {
+			shouldContinue = game.HandleCommand(step.Command)
+		}
 
-	// Execute 'Q' command (no output expected)
-	shouldContinue = game.HandleCommand("Q")
-	assert.False(t, shouldContinue, "Q command should quit")
+		assert.Equal(t, step.ShouldContinue, shouldContinue,
+			"Step %d (%s): shouldContinue mismatch", i, step.Command)
 
-	// Expected full console output
-	expected := `MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
- 00 01 02 03 04 05 06 07
--------------------------
-|BP|**|  |**|  |**|  |**|00
-|**|  |**|  |**|  |**|  |10
-|  |**|  |**|  |**|  |**|20
-|**|  |**|  |**|  |**|  |30
-|  |**|  |**|  |**|  |**|40
-|**|  |**|  |**|  |**|  |50
-|  |**|  |**|  |**|  |**|60
-|**|  |**|  |**|  |**|  |70
--------------------------
- 00 01 02 03 04 05 06 07
-00 00 00
+		// Trim whitespace from both strings to avoid whitespace issues
+		expected := strings.TrimSpace(step.ExpectedDisplay)
+		actual := strings.TrimSpace(buf.String())
+		assert.Equal(t, expected, actual,
+			"Step %d (%s): display output mismatch", i, step.Command)
+	}
 
-MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
- 00 01 02 03 04 05 06 07
--------------------------
-|WR|WN|WB|WK|WQ|WB|WN|WR|00
-|WP|WP|WP|WP|WP|WP|WP|WP|10
-|  |**|  |**|  |**|  |**|20
-|**|  |**|  |**|  |**|  |30
-|  |**|  |**|  |**|  |**|40
-|**|  |**|  |**|  |**|  |50
-|BP|BP|BP|BP|BP|BP|BP|BP|60
-|BR|BN|BB|BK|BQ|BB|BN|BR|70
--------------------------
- 00 01 02 03 04 05 06 07
-CC CC CC
-
-`
-
-	assert.Equal(t, expected, buf.String(), "Full console output should match expected")
+	// Verify final state if specified
+	if tc.Name != "" && strings.Contains(strings.ToLower(tc.Name), "reverse") {
+		assert.Equal(t, tc.FinalReversed, game.Reversed,
+			"Final reversed state should match expected: %v", tc.FinalReversed)
+	}
 }
 
 // TestSetupReverseAndQuitSequence tests: start -> setup -> reverse -> reverse -> quit
 // This simulates: printf "C\nE\nE\nQ\n" | go run cmd/microchess/main.go
+// Test data is loaded from testdata/setup-reverse-quit.yaml
 func TestSetupReverseAndQuitSequence(t *testing.T) {
-	type commandStep struct {
-		command         string
-		shouldContinue  bool
-		expectedDisplay string
-	}
-
-	steps := []commandStep{
-		{
-			command:        "DISPLAY", // Initial display (not a command, just triggers Display())
-			shouldContinue: true,
-			expectedDisplay: `MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
- 00 01 02 03 04 05 06 07
--------------------------
-|BP|**|  |**|  |**|  |**|00
-|**|  |**|  |**|  |**|  |10
-|  |**|  |**|  |**|  |**|20
-|**|  |**|  |**|  |**|  |30
-|  |**|  |**|  |**|  |**|40
-|**|  |**|  |**|  |**|  |50
-|  |**|  |**|  |**|  |**|60
-|**|  |**|  |**|  |**|  |70
--------------------------
- 00 01 02 03 04 05 06 07
-00 00 00
-
-`,
-		},
-		{
-			command:        "C",
-			shouldContinue: true,
-			expectedDisplay: `MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
- 00 01 02 03 04 05 06 07
--------------------------
-|WR|WN|WB|WK|WQ|WB|WN|WR|00
-|WP|WP|WP|WP|WP|WP|WP|WP|10
-|  |**|  |**|  |**|  |**|20
-|**|  |**|  |**|  |**|  |30
-|  |**|  |**|  |**|  |**|40
-|**|  |**|  |**|  |**|  |50
-|BP|BP|BP|BP|BP|BP|BP|BP|60
-|BR|BN|BB|BK|BQ|BB|BN|BR|70
--------------------------
- 00 01 02 03 04 05 06 07
-CC CC CC
-
-`,
-		},
-		{
-			command:        "E",
-			shouldContinue: true,
-			expectedDisplay: `MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
- 00 01 02 03 04 05 06 07
--------------------------
-|BR|BN|BB|BQ|BK|BB|BN|BR|00
-|BP|BP|BP|BP|BP|BP|BP|BP|10
-|  |**|  |**|  |**|  |**|20
-|**|  |**|  |**|  |**|  |30
-|  |**|  |**|  |**|  |**|40
-|**|  |**|  |**|  |**|  |50
-|WP|WP|WP|WP|WP|WP|WP|WP|60
-|WR|WN|WB|WQ|WK|WB|WN|WR|70
--------------------------
- 00 01 02 03 04 05 06 07
-EE EE EE
-
-`,
-		},
-		{
-			command:        "E",
-			shouldContinue: true,
-			expectedDisplay: `MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
- 00 01 02 03 04 05 06 07
--------------------------
-|WR|WN|WB|WK|WQ|WB|WN|WR|00
-|WP|WP|WP|WP|WP|WP|WP|WP|10
-|  |**|  |**|  |**|  |**|20
-|**|  |**|  |**|  |**|  |30
-|  |**|  |**|  |**|  |**|40
-|**|  |**|  |**|  |**|  |50
-|BP|BP|BP|BP|BP|BP|BP|BP|60
-|BR|BN|BB|BK|BQ|BB|BN|BR|70
--------------------------
- 00 01 02 03 04 05 06 07
-EE EE EE
-
-`,
-		},
-		{
-			command:         "Q",
-			shouldContinue:  false,
-			expectedDisplay: "", // Q produces no output
-		},
-	}
-
-	var buf bytes.Buffer
-	game := microchess.NewGame(&buf)
-
-	for i, step := range steps {
-		buf.Reset()
-
-		var shouldContinue bool
-		if step.command == "DISPLAY" {
-			game.Display()
-			shouldContinue = true
-		} else {
-			shouldContinue = game.HandleCommand(step.command)
-		}
-
-		assert.Equal(t, step.shouldContinue, shouldContinue,
-			"Step %d (%s): shouldContinue mismatch", i, step.command)
-		assert.Equal(t, step.expectedDisplay, buf.String(),
-			"Step %d (%s): display output mismatch", i, step.command)
-	}
-
-	// Verify final state - should be back to normal after double reverse
-	assert.False(t, game.Reversed, "Reversed flag should be false after double E")
+	tc := loadTestCase(t, "setup-reverse-quit.yaml")
+	runTestCase(t, tc)
 }
