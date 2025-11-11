@@ -84,9 +84,7 @@ func (m *TestIoMemory) StoreAddress(addr uint16, v uint16) {
 func Test6502CommandSequences(t *testing.T) {
 	// Check if microchess.bin exists
 	_, err := os.Stat("../go6502/microchess.bin")
-	if err != nil {
-		t.Skip("Skipping 6502 tests: microchess.bin not found")
-	}
+	require.NoError(t, err)
 
 	// Find all YAML test files
 	files, err := os.ReadDir("testdata")
