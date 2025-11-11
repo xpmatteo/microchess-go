@@ -142,3 +142,4 @@ This allows direct comparison between the original 6502 code and the Go port!
 - Feed identical inputs to both implementations and verify identical outputs
 - use stretchr/testify for assertions
 - Always run golangci-lint run before concluding a step
+- timeout is not installed; do not try to use it
