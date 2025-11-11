@@ -103,9 +103,11 @@ func runTestCase(t *testing.T, tc testCase) {
 		assert.Equal(t, step.ShouldContinue, shouldContinue,
 			"Step %d (%s): shouldContinue mismatch", i, step.Command)
 
-		// Trim whitespace from both strings to avoid whitespace issues
+		// Normalize line endings (convert \r\n to \n) and trim whitespace
+		// This allows tests to work in both raw terminal mode (\r\n) and normal mode (\n)
 		expected := strings.TrimSpace(step.ExpectedDisplay)
-		actual := strings.TrimSpace(buf.String())
+		actual := strings.ReplaceAll(buf.String(), "\r\n", "\n")
+		actual = strings.TrimSpace(actual)
 		assert.Equal(t, expected, actual,
 			"Step %d (%s): display output mismatch", i, step.Command)
 	}

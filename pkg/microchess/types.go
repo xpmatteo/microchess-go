@@ -272,9 +272,9 @@ func (g *GameState) RotateDigitIntoMove(digit uint8) {
 // Display prints the chess board in the style of the original POUT routine (line 702).
 // The display shows coordinates and piece positions using the 0x88 encoding.
 func (g *GameState) Display() {
-	_, _ = fmt.Fprintln(g.out, "MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com")
-	_, _ = fmt.Fprintln(g.out, " 00 01 02 03 04 05 06 07")
-	_, _ = fmt.Fprintln(g.out, "-------------------------")
+	_, _ = fmt.Fprintf(g.out, "MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com\r\n")
+	_, _ = fmt.Fprintf(g.out, " 00 01 02 03 04 05 06 07\r\n")
+	_, _ = fmt.Fprintf(g.out, "-------------------------\r\n")
 
 	// Display ranks 0 to 7 (original displays 00-70)
 	// The original scans Y from 0x00 to 0x77 in 0x88 format
@@ -301,13 +301,13 @@ func (g *GameState) Display() {
 		}
 
 		// Print rank number in hex on the right (00, 10, 20, ...)
-		_, _ = fmt.Fprintf(g.out, "%X0\n", rank)
+		_, _ = fmt.Fprintf(g.out, "%X0\r\n", rank)
 	}
 
-	_, _ = fmt.Fprintln(g.out, "-------------------------")
-	_, _ = fmt.Fprintln(g.out, " 00 01 02 03 04 05 06 07")
+	_, _ = fmt.Fprintf(g.out, "-------------------------\r\n")
+	_, _ = fmt.Fprintf(g.out, " 00 01 02 03 04 05 06 07\r\n")
 
 	// Print LED display (DIS1 DIS2 DIS3)
-	_, _ = fmt.Fprintf(g.out, "%02X %02X %02X\n", g.DIS1, g.DIS2, g.DIS3)
-	_, _ = fmt.Fprintln(g.out)
+	_, _ = fmt.Fprintf(g.out, "%02X %02X %02X\r\n", g.DIS1, g.DIS2, g.DIS3)
+	_, _ = fmt.Fprintf(g.out, "\r\n")
 }
