@@ -5,6 +5,7 @@ package microchess
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/matteo/microchess-go/pkg/board"
 )
@@ -57,6 +58,9 @@ type GameState struct {
 	// LED display values (shown at bottom of board)
 	// Assembly: $F9, $FA, $FB (DIS1, DIS2, DIS3)
 	DIS1, DIS2, DIS3 uint8
+
+	// I/O for display and input
+	out io.Writer
 }
 
 // InitialSetup contains the starting positions for all pieces.
@@ -78,8 +82,12 @@ var InitialSetup = [32]board.Square{
 // NewGame creates a new game with an empty board state.
 // The board must be initialized with SetupBoard() (via 'C' command) before play.
 // This matches the original assembly behavior where the board is uninitialized at startup.
-func NewGame() *GameState {
-	g := &GameState{}
+//
+// The out Writer is used for all display output (board, messages, etc.)
+func NewGame(out io.Writer) *GameState {
+	g := &GameState{
+		out: out,
+	}
 	// Initialize boards with off-board sentinel values (0xFF)
 	// This simulates the uninitialized state of the original
 	for i := 0; i < 16; i++ {
@@ -213,8 +221,8 @@ func (g *GameState) HandleCommand(command string) bool {
 		return true
 
 	default:
-		fmt.Println("Unknown command:", command)
-		fmt.Println("Available commands: C (setup), E (reverse), Q (quit)")
+		_, _ = fmt.Fprintln(g.out, "Unknown command:", command)
+		_, _ = fmt.Fprintln(g.out, "Available commands: C (setup), E (reverse), Q (quit)")
 		return true
 	}
 }
@@ -222,42 +230,42 @@ func (g *GameState) HandleCommand(command string) bool {
 // Display prints the chess board in the style of the original POUT routine (line 702).
 // The display shows coordinates and piece positions using the 0x88 encoding.
 func (g *GameState) Display() {
-	fmt.Println("MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com")
-	fmt.Println(" 00 01 02 03 04 05 06 07")
-	fmt.Println("-------------------------")
+	_, _ = fmt.Fprintln(g.out, "MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com")
+	_, _ = fmt.Fprintln(g.out, " 00 01 02 03 04 05 06 07")
+	_, _ = fmt.Fprintln(g.out, "-------------------------")
 
 	// Display ranks 0 to 7 (original displays 00-70)
 	// The original scans Y from 0x00 to 0x77 in 0x88 format
 	for rank := 0; rank <= 7; rank++ {
-		fmt.Print("|")
+		_, _ = fmt.Fprint(g.out, "|")
 
 		for file := 0; file < 8; file++ {
 			sq := board.Square((rank << 4) | file)
 			piece, found, isWhite := g.FindPieceAt(sq)
 
 			if found {
-				fmt.Print(GetPieceChar(piece, isWhite))
+				_, _ = fmt.Fprint(g.out, GetPieceChar(piece, isWhite))
 			} else {
 				// Checkerboard pattern for empty squares
 				// Original: check if (file + rank) is odd for asterisk
 				if (rank+file)%2 == 1 {
-					fmt.Print("**")
+					_, _ = fmt.Fprint(g.out, "**")
 				} else {
-					fmt.Print("  ")
+					_, _ = fmt.Fprint(g.out, "  ")
 				}
 			}
 
-			fmt.Print("|")
+			_, _ = fmt.Fprint(g.out, "|")
 		}
 
 		// Print rank number in hex on the right (00, 10, 20, ...)
-		fmt.Printf("%X0\n", rank)
+		_, _ = fmt.Fprintf(g.out, "%X0\n", rank)
 	}
 
-	fmt.Println("-------------------------")
-	fmt.Println(" 00 01 02 03 04 05 06 07")
+	_, _ = fmt.Fprintln(g.out, "-------------------------")
+	_, _ = fmt.Fprintln(g.out, " 00 01 02 03 04 05 06 07")
 
 	// Print LED display (DIS1 DIS2 DIS3)
-	fmt.Printf("%02X %02X %02X\n", g.DIS1, g.DIS2, g.DIS3)
-	fmt.Println()
+	_, _ = fmt.Fprintf(g.out, "%02X %02X %02X\n", g.DIS1, g.DIS2, g.DIS3)
+	_, _ = fmt.Fprintln(g.out)
 }

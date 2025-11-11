@@ -4,6 +4,7 @@
 package microchess
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/matteo/microchess-go/pkg/board"
@@ -11,7 +12,8 @@ import (
 )
 
 func TestNewGame(t *testing.T) {
-	game := NewGame()
+	var buf bytes.Buffer
+	game := NewGame(&buf)
 	assert.NotNil(t, game, "NewGame() should not return nil")
 
 	// NewGame() should start with empty board (matching original assembly behavior)
@@ -63,7 +65,8 @@ func TestSetupBoard(t *testing.T) {
 }
 
 func TestFindPieceAt(t *testing.T) {
-	game := NewGame()
+	var buf bytes.Buffer
+	game := NewGame(&buf)
 	game.SetupBoard() // Setup the board first
 
 	tests := []struct {
@@ -117,6 +120,8 @@ func TestGetPieceChar(t *testing.T) {
 }
 
 func TestReverse(t *testing.T) {
+	var buf bytes.Buffer
+
 	t.Run("coordinate transformation", func(t *testing.T) {
 		// Test that 0x77 - coordinate transformation works correctly
 		// Key principle: square + (0x77 - square) = 0x77
@@ -130,7 +135,7 @@ func TestReverse(t *testing.T) {
 	})
 
 	t.Run("single reverse swaps boards and transforms coordinates", func(t *testing.T) {
-		game := NewGame()
+		game := NewGame(&buf)
 		game.SetupBoard()
 
 		// Save original positions
@@ -156,7 +161,7 @@ func TestReverse(t *testing.T) {
 	})
 
 	t.Run("double reverse restores original position", func(t *testing.T) {
-		game := NewGame()
+		game := NewGame(&buf)
 		game.SetupBoard()
 
 		// Save all original positions
@@ -174,7 +179,7 @@ func TestReverse(t *testing.T) {
 	})
 
 	t.Run("reverse with all pieces", func(t *testing.T) {
-		game := NewGame()
+		game := NewGame(&buf)
 		game.SetupBoard()
 
 		// Verify that all 16 pieces in each board are handled
@@ -201,7 +206,7 @@ func TestReverse(t *testing.T) {
 		// Test key transformations from the original assembly
 		// White pieces start on rank 0-1, black on rank 6-7
 		// After reverse, they should be flipped
-		game := NewGame()
+		game := NewGame(&buf)
 		game.SetupBoard()
 
 		// White king starts at 0x03 (d1)
@@ -221,7 +226,8 @@ func TestReverse(t *testing.T) {
 
 func TestHandleCommandE(t *testing.T) {
 	t.Run("E command calls Reverse", func(t *testing.T) {
-		game := NewGame()
+		var buf bytes.Buffer
+		game := NewGame(&buf)
 		game.SetupBoard()
 
 		originalWhiteKing := game.Board[PieceKing]
@@ -249,7 +255,8 @@ func TestHandleCommandE(t *testing.T) {
 	})
 
 	t.Run("double E command restores position", func(t *testing.T) {
-		game := NewGame()
+		var buf bytes.Buffer
+		game := NewGame(&buf)
 		game.SetupBoard()
 
 		originalBoard := game.Board

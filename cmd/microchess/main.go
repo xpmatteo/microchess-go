@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	game := microchess.NewGame()
+	game := microchess.NewGame(os.Stdout)
 
 	game.Display()
 
