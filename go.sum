@@ -1,3 +1,5 @@
+github.com/beevik/go6502 v0.3.0 h1:1Gsf1VZjZapXcQbrIzgnqHCPy9+4QuaUNZKyCVBGISY=
+github.com/beevik/go6502 v0.3.0/go.mod h1:RnOLF4I+55D4QsUn0BQK1Sy40dtjco/XHC+iI82IBU0=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
