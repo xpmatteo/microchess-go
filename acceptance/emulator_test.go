@@ -11,7 +11,6 @@ import (
 	"testing"
 
 	"github.com/beevik/go6502/cpu"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -153,41 +152,92 @@ func run6502TestCase(t *testing.T, tc testCase) {
 	output := outputBuf.String()
 	t.Logf("6502 output length: %d bytes", len(output))
 
-	// Split output by displays (look for the separator lines)
+	// Split output by displays
 	displays := splitDisplays(output)
 	t.Logf("Found %d displays in 6502 output", len(displays))
 
-	// Verify we got output for each expected step (skip DISPLAY command steps, count actual outputs)
-	expectedDisplayCount := 0
-	for _, step := range tc.Steps {
-		if step.ExpectedDisplay != "" {
-			expectedDisplayCount++
+	// Deduplicate consecutive displays with same status (6502 may display multiple times)
+	uniqueDisplays := deduplicateDisplays(displays)
+	t.Logf("After deduplication: %d unique displays", len(uniqueDisplays))
+
+	// Debug: log each unique display
+	for i, disp := range uniqueDisplays {
+		normalized := normalizeDisplay(disp)
+		// Extract status code from display
+		lines := strings.Split(normalized, "\n")
+		statusLine := lines[len(lines)-1]
+		t.Logf("Display %d status: %s", i, statusLine)
+	}
+
+	// Compare each display against expected output
+	displayIdx := 0
+	for i, step := range tc.Steps {
+		if step.ExpectedDisplay == "" {
+			continue // Skip steps with no expected display (like Q command)
+		}
+
+		if displayIdx >= len(uniqueDisplays) {
+			t.Errorf("Step %d (%s): No 6502 display available (expected %d displays, got %d)",
+				i, step.Command, displayIdx+1, len(uniqueDisplays))
+			continue
+		}
+
+		// Normalize both outputs for comparison
+		// The 6502 version has different formatting (extra separators, ? prompt)
+		expected := normalizeDisplay(step.ExpectedDisplay)
+		actual := normalizeDisplay(uniqueDisplays[displayIdx])
+
+		if expected != actual {
+			t.Errorf("Step %d (%s): Display mismatch\n=== EXPECTED ===\n%s\n=== ACTUAL (6502) ===\n%s\n=== END ===",
+				i, step.Command, expected, actual)
+		} else {
+			t.Logf("Step %d (%s): Display matches ✓", i, step.Command)
+		}
+
+		displayIdx++
+	}
+}
+
+// deduplicateDisplays removes consecutive duplicate displays (same full content)
+func deduplicateDisplays(displays []string) []string {
+	if len(displays) == 0 {
+		return displays
+	}
+
+	var result []string
+	var lastNormalized string
+
+	for _, disp := range displays {
+		// Normalize and compare full display content
+		normalized := normalizeDisplay(disp)
+
+		// Only add if content changed
+		if normalized != lastNormalized {
+			result = append(result, disp)
+			lastNormalized = normalized
 		}
 	}
 
-	// The 6502 version should produce similar number of displays
-	// Note: May differ slightly due to implementation details
-	if len(displays) > 0 {
-		assert.GreaterOrEqual(t, len(displays), expectedDisplayCount-1,
-			"6502 should produce at least %d displays", expectedDisplayCount-1)
+	return result
+}
+
+// normalizeDisplay normalizes a display for comparison
+// Strips extra separators, prompts, and focuses on actual content
+func normalizeDisplay(display string) string {
+	var result strings.Builder
+	lines := strings.Split(strings.TrimSpace(display), "\n")
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		// Skip empty lines, separator lines, and prompt lines
+		if line == "" || line == "-------------------------" || line == "?" {
+			continue
+		}
+		result.WriteString(line)
+		result.WriteString("\n")
 	}
 
-	// For detailed comparison, we'd need to:
-	// 1. Parse each display section
-	// 2. Extract board state and status codes
-	// 3. Compare with expected values
-	// This is complex because the 6502 output format may differ slightly from Go version
-
-	// For now, verify key elements are present in output
-	for _, step := range tc.Steps {
-		if step.Command == "C" {
-			assert.Contains(t, output, "WR", "Setup should show white rooks")
-			assert.Contains(t, output, "BP", "Setup should show black pawns")
-		}
-		if step.Command == "E" {
-			assert.Contains(t, output, "EE", "Reverse should show EE status")
-		}
-	}
+	return strings.TrimSpace(result.String())
 }
 
 // splitDisplays splits the output into individual display sections
