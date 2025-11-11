@@ -32,20 +32,28 @@ Available commands: C (setup), E (reverse), Q (quit)
 	assert.Equal(t, expected, output, "Unknown command should show error message")
 }
 
-// TestSetupAndQuitSequence tests the complete workflow: start -> setup -> quit
-// This simulates: printf "C\nQ\n" | go run cmd/microchess/main.go
-// Test data is loaded from testdata/setup-quit.yaml
-func TestSetupAndQuitSequence(t *testing.T) {
-	tc := loadTestCase(t, "setup-quit.yaml")
-	runTestCase(t, tc)
-}
+// TestCommandSequences loads and executes all YAML test cases from testdata/
+func TestCommandSequences(t *testing.T) {
+	// Find all YAML files in testdata/
+	files, err := os.ReadDir("testdata")
+	require.NoError(t, err, "Failed to read testdata directory")
 
-// TestSetupReverseAndQuitSequence tests: start -> setup -> reverse -> reverse -> quit
-// This simulates: printf "C\nE\nE\nQ\n" | go run cmd/microchess/main.go
-// Test data is loaded from testdata/setup-reverse-quit.yaml
-func TestSetupReverseAndQuitSequence(t *testing.T) {
-	tc := loadTestCase(t, "setup-reverse-quit.yaml")
-	runTestCase(t, tc)
+	var yamlFiles []string
+	for _, file := range files {
+		if !file.IsDir() && strings.HasSuffix(file.Name(), ".yaml") {
+			yamlFiles = append(yamlFiles, file.Name())
+		}
+	}
+
+	require.NotEmpty(t, yamlFiles, "No YAML test files found in testdata/")
+
+	// Run each test case as a subtest
+	for _, filename := range yamlFiles {
+		tc := loadTestCase(t, filename)
+		t.Run(tc.Name, func(t *testing.T) {
+			runTestCase(t, tc)
+		})
+	}
 }
 
 // commandStep represents a single command and its expected output
