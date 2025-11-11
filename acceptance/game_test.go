@@ -199,31 +199,17 @@ CC CC CC
 // TestSetupReverseAndQuitSequence tests: start -> setup -> reverse -> reverse -> quit
 // This simulates: printf "C\nE\nE\nQ\n" | go run cmd/microchess/main.go
 func TestSetupReverseAndQuitSequence(t *testing.T) {
-	var buf bytes.Buffer
-	game := microchess.NewGame(&buf)
+	type commandStep struct {
+		command         string
+		shouldContinue  bool
+		expectedDisplay string
+	}
 
-	// Capture initial display
-	game.Display()
-
-	// Execute 'C' command
-	shouldContinue := game.HandleCommand("C")
-	assert.True(t, shouldContinue, "C command should not quit")
-
-	// Execute 'E' command (first reverse)
-	shouldContinue = game.HandleCommand("E")
-	assert.True(t, shouldContinue, "E command should not quit")
-
-	// Execute 'E' command (second reverse - back to original)
-	shouldContinue = game.HandleCommand("E")
-	assert.True(t, shouldContinue, "E command should not quit")
-
-	// Execute 'Q' command (no output expected)
-	shouldContinue = game.HandleCommand("Q")
-	assert.False(t, shouldContinue, "Q command should quit")
-
-	// Expected full console output
-	// First E flips to black at bottom, second E flips back to white at bottom
-	expected := `MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
+	steps := []commandStep{
+		{
+			command:        "DISPLAY", // Initial display (not a command, just triggers Display())
+			shouldContinue: true,
+			expectedDisplay: `MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
  00 01 02 03 04 05 06 07
 -------------------------
 |BP|**|  |**|  |**|  |**|00
@@ -238,7 +224,12 @@ func TestSetupReverseAndQuitSequence(t *testing.T) {
  00 01 02 03 04 05 06 07
 00 00 00
 
-MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
+`,
+		},
+		{
+			command:        "C",
+			shouldContinue: true,
+			expectedDisplay: `MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
  00 01 02 03 04 05 06 07
 -------------------------
 |WR|WN|WB|WK|WQ|WB|WN|WR|00
@@ -253,7 +244,12 @@ MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
  00 01 02 03 04 05 06 07
 CC CC CC
 
-MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
+`,
+		},
+		{
+			command:        "E",
+			shouldContinue: true,
+			expectedDisplay: `MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
  00 01 02 03 04 05 06 07
 -------------------------
 |BR|BN|BB|BQ|BK|BB|BN|BR|00
@@ -268,7 +264,12 @@ MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
  00 01 02 03 04 05 06 07
 EE EE EE
 
-MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
+`,
+		},
+		{
+			command:        "E",
+			shouldContinue: true,
+			expectedDisplay: `MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
  00 01 02 03 04 05 06 07
 -------------------------
 |WR|WN|WB|WK|WQ|WB|WN|WR|00
@@ -283,9 +284,34 @@ MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
  00 01 02 03 04 05 06 07
 EE EE EE
 
-`
+`,
+		},
+		{
+			command:         "Q",
+			shouldContinue:  false,
+			expectedDisplay: "", // Q produces no output
+		},
+	}
 
-	assert.Equal(t, expected, buf.String(), "Full console output should match expected")
+	var buf bytes.Buffer
+	game := microchess.NewGame(&buf)
+
+	for i, step := range steps {
+		buf.Reset()
+
+		var shouldContinue bool
+		if step.command == "DISPLAY" {
+			game.Display()
+			shouldContinue = true
+		} else {
+			shouldContinue = game.HandleCommand(step.command)
+		}
+
+		assert.Equal(t, step.shouldContinue, shouldContinue,
+			"Step %d (%s): shouldContinue mismatch", i, step.command)
+		assert.Equal(t, step.expectedDisplay, buf.String(),
+			"Step %d (%s): display output mismatch", i, step.command)
+	}
 
 	// Verify final state - should be back to normal after double reverse
 	assert.False(t, game.Reversed, "Reversed flag should be false after double E")
