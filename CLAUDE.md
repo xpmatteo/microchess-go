@@ -40,6 +40,37 @@ pkg/eval/                  - Position evaluation
 pkg/microchess/            - Core engine
 ```
 
+## Input Handling
+
+The Go port implements character-by-character input matching the original 1976 serial terminal behavior:
+
+### Raw Terminal Mode (Interactive Use)
+
+When running interactively (`go run ./cmd/microchess`), the program switches stdin to raw mode using `golang.org/x/term.MakeRaw()`. This provides:
+
+- **Character-by-character input**: Each keypress is processed immediately without waiting for Enter
+- **Character echo**: Typed characters are echoed to the terminal (matching original SYSCHOUT behavior)
+- **Commands execute instantly**: Pressing `C` immediately sets up the board, `E` reverses, `P` prints, `Q` quits
+- **Carriage return + line feed**: Output uses `\r\n` for proper line positioning in raw mode
+
+This matches the original assembly's **KIN routine** (line 812) which reads one character at a time from the serial port using a polling loop.
+
+### Piped Input Mode (Testing)
+
+When input is piped (`printf 'CPQ' | ./microchess`), the program detects this using `term.IsTerminal()` and:
+
+- **Reads character-by-character** but skips raw mode setup
+- **No character echo**: Characters aren't echoed to avoid cluttering test output
+- **Handles EOF gracefully**: Exits cleanly when pipe closes
+- **Enables automated testing**: Allows scripted input for acceptance tests and comparisons
+
+### Implementation Details
+
+- **Auto-detection**: Uses `term.IsTerminal(os.Stdin.Fd())` to detect terminal vs pipe
+- **Single-byte reads**: `os.Stdin.Read(buf)` with 1-byte buffer, just like original ACIA reads
+- **Uppercase conversion**: Characters are converted to uppercase (original: `AND #$4F`)
+- **Location**: See `cmd/microchess/main.go` lines 14-74
+
 ## Key Historical Context
 
 MicroChess demonstrates remarkable code density:
@@ -81,6 +112,47 @@ When reading the original code, understand these patterns:
 
 ## Development Commands
 
+### Running the Go Port
+
+```bash
+# Build and run interactively (character-by-character input in raw terminal mode)
+go run ./cmd/microchess
+
+# Build binary
+go build -o microchess ./cmd/microchess
+
+# Test with piped input (for automated testing)
+printf 'CPQ' | go run ./cmd/microchess
+printf 'CEPEQ' | ./microchess
+```
+
+### Testing
+
+```bash
+# Run all tests
+go test ./...
+
+# Run acceptance tests only
+go test ./acceptance/...
+
+# Run with verbose output
+go test ./... -v
+
+# Run linter
+golangci-lint run
+```
+
+### Comparing with Original
+
+```bash
+# Run original 6502 code with same input
+printf 'CQ' | make play-6502
+
+# Compare outputs side-by-side
+printf 'CEQ' | go run ./cmd/microchess > go-output.txt
+printf 'CEQ' | make play-6502 > 6502-output.txt
+diff go-output.txt 6502-output.txt
+```
 
 
 ## Running the Original 6502 Code
@@ -101,12 +173,32 @@ This allows direct comparison between the original 6502 code and the Go port!
 
 ## Testing Philosophy
 
-- Unit tests for each major routine
-- Verify move generation matches assembly
-- Validate evaluation scores
-- Test opening book sequences
-- **Compare game play to original running in go6502 emulator**
-- Feed identical inputs to both implementations and verify identical outputs
-- use stretchr/testify for assertions
-- Always run golangci-lint run before concluding a step
-- timeout is not installed; do not try to use it
+### Test Types
+
+**Unit Tests**:
+- Each major routine has corresponding unit tests in `pkg/*/` directories
+- Test individual functions (board representation, coordinate transformations, etc.)
+- Use `github.com/stretchr/testify` for assertions
+
+**Acceptance Tests** (`acceptance/`):
+- YAML-based test fixtures in `acceptance/testdata/*.yaml`
+- Define command sequences and expected display output
+- Test complete user workflows (setup, reverse, etc.)
+- Compare Go port output to expected board states
+- Line endings are normalized (`\r\n` → `\n`) for cross-platform compatibility
+
+**6502 Comparison Tests** (`acceptance/emulator_test.go`):
+- Feed identical inputs to both Go port and original 6502 emulator
+- Parse and compare board displays from both implementations
+- Verify LED display values match (DIS1, DIS2, DIS3)
+- Ensure behavior is byte-for-byte equivalent to 1976 original
+
+### Test Guidelines
+
+- **Always run `golangci-lint run`** before concluding any implementation step
+- **Use `t.Skip()`** for tests of unimplemented functionality (e.g., move input)
+  - Tests should compile but skip execution with clear message
+  - Example: `t.Skip("Move input not yet implemented - scheduled for future phase")`
+- **YAML test format**: See `acceptance/testdata/setup-and-quit.yaml` for structure
+- **Piped input testing**: Use `printf 'CPQ' | go run ./cmd/microchess` for quick validation
+- **Note**: `timeout` command is not installed; do not try to use it
