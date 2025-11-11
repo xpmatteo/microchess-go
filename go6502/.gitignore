@@ -1,0 +1,11 @@
+debug
+debug.test
+go6502
+go6502.exe
+todo.txt
+sample.bin
+sample.map
+.vscode/
+
+#*.bin
+#*.cmd
