@@ -27,37 +27,28 @@ This produces:
 ### 3. Run MicroChess
 
 ```bash
-./go6502 microchess.cmd
+go run testrun.go iomem.go microchess.bin
 ```
 
 This will:
 1. Load the MicroChess binary at address $1000
 2. Set the program counter to $1000 (start address)
-3. Show a disassembly of the first instructions
-4. Enter interactive debugger mode
+3. Switch the terminal to raw mode for character-by-character input
+4. Run the program until it hits a BRK instruction
 
-## go6502 Debugger Commands
-
-Once in the debugger, you can use these commands:
-
-- `si [count]` - Step into instructions (execute N instructions)
-- `s` - Step over (skip subroutine calls)
-- `d [address]` - Disassemble code at address
-- `m [address]` - Display memory contents
-- `r <register> <value>` - Set register value
-- `b <address>` - Set breakpoint
-- `c` - Continue execution until breakpoint
-- `quit` - Exit emulator
+**Important**: The terminal operates in raw mode - you do NOT need to press Enter after typing commands. Each character is sent immediately to the program. Press Ctrl+C to exit and restore normal terminal behavior.
 
 ## MicroChess Commands
 
-Once the program is running and shows the chess board prompt (`?`), you can:
+The program runs directly without a debugger. When you see the chess board prompt (`?`), you can:
 
 - `C` - Set up a new game (initialize board)
 - `E` - Reverse/flip the board view
 - `P` - Computer makes a move (play)
-- Enter a move: Type FROM square (e.g., `12`) then TO square (e.g., `33`)
+- Enter a move: Type FROM square (e.g., `12`) then TO square (e.g., `33`) - no Enter key needed
 - `Q` - Quit to system ($FF00)
+
+**Note**: In raw terminal mode, characters are NOT echoed to the screen. The program will display output but you won't see your keystrokes as you type them.
 
 ### Move Entry Format
 

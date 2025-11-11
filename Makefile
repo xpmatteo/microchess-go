@@ -11,7 +11,7 @@ lint:
 	golangci-lint run ./...
 
 fmt:
-	gofmt -w pkg cmd acceptance
+	gofmt -w pkg cmd acceptance go6502
 
 tidy:
 	go mod tidy
@@ -25,4 +25,4 @@ go6502/microchess.bin: go6502/microchess.asm go6502/go6502
 	cd go6502 && ./go6502 -a microchess.asm
 
 play-6502: go6502/go6502 go6502/microchess.bin
-	cd go6502 && ./go6502 -a microchess.asm && go run testrun.go iomem.go microchess.bin
+	cd go6502 && go run testrun.go iomem.go microchess.bin

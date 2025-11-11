@@ -6,6 +6,8 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/beevik/go6502/cpu"
 )
@@ -19,6 +21,21 @@ func main() {
 	// Create CPU with I/O-enabled memory
 	mem := NewIoMemory()
 	c := cpu.NewCPU(cpu.CMOS, mem)
+
+	// Set up signal handling to restore terminal on Ctrl+C
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+
+	// Ensure terminal is restored on exit
+	defer mem.Restore()
+
+	// Handle signals in goroutine
+	go func() {
+		<-sigChan
+		fmt.Println("\nInterrupted, restoring terminal...")
+		mem.Restore()
+		os.Exit(0)
+	}()
 
 	// Load the program
 	data, err := os.ReadFile(os.Args[1])

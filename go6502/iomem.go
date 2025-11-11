@@ -4,38 +4,52 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 
 	"github.com/beevik/go6502/cpu"
+	"golang.org/x/term"
 )
 
 // IoMemory wraps FlatMemory and adds I/O at specific addresses
 type IoMemory struct {
 	mem       *cpu.FlatMemory
-	reader    *bufio.Reader
+	oldState  *term.State
 	lastInput byte
 }
 
-// NewIoMemory creates a new memory with I/O support
+// NewIoMemory creates a new memory with I/O support and switches to raw terminal mode
 func NewIoMemory() *IoMemory {
+	// Switch stdin to raw mode for character-by-character input
+	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: Could not set raw terminal mode: %v\n", err)
+	}
+
 	return &IoMemory{
-		mem:    cpu.NewFlatMemory(),
-		reader: bufio.NewReader(os.Stdin),
+		mem:      cpu.NewFlatMemory(),
+		oldState: oldState,
+	}
+}
+
+// Restore returns the terminal to its original state
+func (m *IoMemory) Restore() {
+	if m.oldState != nil {
+		term.Restore(int(os.Stdin.Fd()), m.oldState)
 	}
 }
 
 // LoadByte loads a byte, with I/O at $FFF1
 func (m *IoMemory) LoadByte(addr uint16) byte {
-	// $FFF1 - Character input (blocking read from stdin)
+	// $FFF1 - Character input (blocking read from stdin, one byte at a time)
 	if addr == 0xFFF1 {
 		if m.lastInput == 0 {
-			char, err := m.reader.ReadByte()
+			buf := make([]byte, 1)
+			_, err := os.Stdin.Read(buf)
 			if err != nil {
 				return 0
 			}
-			m.lastInput = char
+			m.lastInput = buf[0]
 		}
 		result := m.lastInput
 		m.lastInput = 0
