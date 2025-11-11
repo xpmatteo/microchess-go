@@ -192,16 +192,37 @@ func (g *GameState) Reverse() {
 	g.Reversed = !g.Reversed
 }
 
-// HandleCommand processes a single command and returns true if the program should continue.
+// HandleCommand processes a single command string and returns true if the program should continue.
 // Returns false if the program should quit.
+// This is kept for backward compatibility but HandleCharacter is preferred for character-by-character input.
 func (g *GameState) HandleCommand(command string) bool {
-	switch command {
-	case "Q":
-		// Quit program
+	if len(command) == 0 {
+		return true
+	}
+	return g.HandleCharacter(command[0])
+}
+
+// HandleCharacter processes a single character input and returns true if the program should continue.
+// Returns false if the program should quit.
+// This matches the original assembly's KIN routine which processes one character at a time.
+//
+// Reference: Assembly lines 110-152 (main input loop), 812-816 (KIN routine)
+func (g *GameState) HandleCharacter(char byte) bool {
+	// Mask to handle both upper and lowercase (original: AND #$4F masks bits)
+	// Convert lowercase to uppercase for simplicity
+	if char >= 'a' && char <= 'z' {
+		char = char - 'a' + 'A'
+	}
+
+	switch char {
+	case 'Q':
+		// Quit program (assembly line 148)
+		_, _ = fmt.Fprintln(g.out, "\r") // Clean newline
 		return false
 
-	case "C":
-		// Setup board (SETUP routine, line 665)
+	case 'C':
+		// Setup board (SETUP routine, line 665, called at line 116)
+		_, _ = fmt.Fprintln(g.out, "\r") // Clean newline after echoed 'C'
 		g.SetupBoard()
 		// Set LED display to "CC CC CC" to indicate setup
 		g.DIS1 = 0xCC
@@ -210,8 +231,9 @@ func (g *GameState) HandleCommand(command string) bool {
 		g.Display()
 		return true
 
-	case "E":
-		// Reverse board perspective (REVERSE routine, line 382)
+	case 'E':
+		// Reverse board perspective (REVERSE routine, line 382, called at line 126)
+		_, _ = fmt.Fprintln(g.out, "\r") // Clean newline after echoed 'E'
 		g.Reverse()
 		// Set LED display to "EE EE EE" to indicate reversal
 		g.DIS1 = 0xEE
@@ -220,11 +242,31 @@ func (g *GameState) HandleCommand(command string) bool {
 		g.Display()
 		return true
 
+	case 'P':
+		// Print board (POUT routine, line 702, called at line 140)
+		_, _ = fmt.Fprintln(g.out, "\r") // Clean newline after echoed 'P'
+		g.Display()
+		return true
+
+	case '\r', '\n':
+		// Enter/Return key - just print newline and continue
+		_, _ = fmt.Fprintln(g.out, "\r")
+		return true
+
 	default:
-		_, _ = fmt.Fprintln(g.out, "Unknown command:", command)
-		_, _ = fmt.Fprintln(g.out, "Available commands: C (setup), E (reverse), Q (quit)")
+		// Unknown command - print error
+		_, _ = fmt.Fprintf(g.out, "\r\nUnknown command: %c\r\n", char)
+		_, _ = fmt.Fprintln(g.out, "Available commands: C (setup), E (reverse), P (print), Q (quit)")
 		return true
 	}
+}
+
+// RotateDigitIntoMove implements the DISMV routine from assembly (lines 625-633).
+// This rotates a digit into the move display registers DIS2/DIS3.
+// TODO: Full implementation scheduled for future move input phase.
+func (g *GameState) RotateDigitIntoMove(digit uint8) {
+	// Stub for future implementation
+	panic("RotateDigitIntoMove not yet implemented")
 }
 
 // Display prints the chess board in the style of the original POUT routine (line 702).

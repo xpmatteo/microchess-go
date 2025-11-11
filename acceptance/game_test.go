@@ -25,9 +25,7 @@ func TestUnknownCommand(t *testing.T) {
 
 	output := buf.String()
 
-	expected := `Unknown command: X
-Available commands: C (setup), E (reverse), Q (quit)
-`
+	expected := "\r\nUnknown command: X\r\nAvailable commands: C (setup), E (reverse), P (print), Q (quit)\n"
 
 	assert.Equal(t, expected, output, "Unknown command should show error message")
 }
