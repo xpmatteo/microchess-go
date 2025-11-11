@@ -202,3 +202,37 @@ This allows direct comparison between the original 6502 code and the Go port!
 - **YAML test format**: See `acceptance/testdata/setup-and-quit.yaml` for structure
 - **Piped input testing**: Use `printf 'CPQ' | go run ./cmd/microchess` for quick validation
 - **Note**: `timeout` command is not installed; do not try to use it
+
+### Creating Acceptance Tests
+
+**Workflow**: Develop acceptance tests by first observing the original 1976 program's behavior:
+
+1. **Run the original with test input**:
+   ```bash
+   printf 'CEQ' | make play-6502 > original-output.txt
+   ```
+
+2. **Extract the board displays** from the output to understand expected behavior
+
+3. **Create YAML test fixture** in `acceptance/testdata/` using the original's output:
+   ```yaml
+   name: "Setup, Reverse, and Quit Sequence"
+   description: "Tests double reverse returning board to original orientation"
+   steps:
+     - command: "DISPLAY"
+       should_continue: true
+       expected_display: |
+         [paste board display from original output]
+     - command: "C"
+       should_continue: true
+       expected_display: |
+         [paste board display after C command]
+   ```
+
+4. **Run the Go port** with same input and verify it matches:
+   ```bash
+   printf 'CEQ' | go run ./cmd/microchess
+   go test ./acceptance/... -v
+   ```
+
+This ensures the Go port's behavior is validated against the actual 1976 original, not against assumptions.
