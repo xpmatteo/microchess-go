@@ -22,7 +22,8 @@ type testCase struct {
 	Description   string        `yaml:"description"`
 	FinalReversed bool          `yaml:"final_reversed"`
 	Steps         []commandStep `yaml:"steps"`
-	Skip          bool          `yaml:"skip"`
+	Skip          bool          `yaml:"skip"`      // Skip on both Go port and 6502 emulator
+	Skip6502      bool          `yaml:"skip_6502"` // Skip only on 6502 emulator
 }
 
 // commandStep represents one or more commands and the expected final output

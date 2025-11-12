@@ -98,6 +98,8 @@ func Test6502CommandSequences(t *testing.T) {
 		t.Run(tc.Name+" (6502)", func(t *testing.T) {
 			if tc.Skip {
 				t.Skip()
+			} else if tc.Skip6502 {
+				t.Skip("Skipped on 6502: test uses Go port extensions not available in original 1976 program")
 			} else {
 				run6502TestCase(t, tc)
 			}
