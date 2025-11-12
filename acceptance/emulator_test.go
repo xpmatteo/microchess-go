@@ -103,7 +103,11 @@ func Test6502CommandSequences(t *testing.T) {
 	for _, filename := range yamlFiles {
 		tc := loadTestCase(t, filename)
 		t.Run(tc.Name+" (6502)", func(t *testing.T) {
-			run6502TestCase(t, tc)
+			if tc.Skip {
+				t.Skip()
+			} else {
+				run6502TestCase(t, tc)
+			}
 		})
 	}
 }

@@ -15,6 +15,22 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// testCase represents a complete test scenario with multiple steps
+type testCase struct {
+	Name          string        `yaml:"name"`
+	Description   string        `yaml:"description"`
+	FinalReversed bool          `yaml:"final_reversed"`
+	Steps         []commandStep `yaml:"steps"`
+	Skip          bool          `yaml:"skip"`
+}
+
+// commandStep represents a single command and its expected output
+type commandStep struct {
+	Command         string `yaml:"command"`
+	ShouldContinue  bool   `yaml:"should_continue"`
+	ExpectedDisplay string `yaml:"expected_display"`
+}
+
 // TestUnknownCommand tests that unknown commands are handled gracefully
 func TestUnknownCommand(t *testing.T) {
 	var buf bytes.Buffer
@@ -25,7 +41,7 @@ func TestUnknownCommand(t *testing.T) {
 
 	output := buf.String()
 
-	expected := "\r\nUnknown command: X\r\nAvailable commands: C (setup), E (reverse), P (print), Q (quit)\n"
+	expected := "\r\nUnknown command: X\r\nAvailable commands: C (setup), E (reverse), P (print), Q (quit), 0-7 (move)\n"
 
 	assert.Equal(t, expected, output, "Unknown command should show error message")
 }
@@ -49,24 +65,13 @@ func TestCommandSequences(t *testing.T) {
 	for _, filename := range yamlFiles {
 		tc := loadTestCase(t, filename)
 		t.Run(tc.Name, func(t *testing.T) {
-			runTestCase(t, tc)
+			if tc.Skip {
+				t.Skip()
+			} else {
+				runTestCase(t, tc)
+			}
 		})
 	}
-}
-
-// commandStep represents a single command and its expected output
-type commandStep struct {
-	Command         string `yaml:"command"`
-	ShouldContinue  bool   `yaml:"should_continue"`
-	ExpectedDisplay string `yaml:"expected_display"`
-}
-
-// testCase represents a complete test scenario with multiple steps
-type testCase struct {
-	Name          string        `yaml:"name"`
-	Description   string        `yaml:"description"`
-	FinalReversed bool          `yaml:"final_reversed"`
-	Steps         []commandStep `yaml:"steps"`
 }
 
 // loadTestCase loads a test case from a YAML file
