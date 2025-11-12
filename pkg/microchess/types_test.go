@@ -234,7 +234,7 @@ func TestHandleCommandE(t *testing.T) {
 		originalBlackKing := game.BK[PieceKing]
 
 		// Execute E command
-		result := game.HandleCommand("E")
+		result := game.HandleCharacter('E')
 
 		// Should return true (continue)
 		assert.True(t, result, "HandleCommand('E') should return true")
@@ -263,8 +263,8 @@ func TestHandleCommandE(t *testing.T) {
 		originalBK := game.BK
 
 		// Execute E command twice
-		game.HandleCommand("E")
-		game.HandleCommand("E")
+		game.HandleCharacter('E')
+		game.HandleCharacter('E')
 
 		// Should restore original position
 		assert.Equal(t, originalBoard, game.Board, "Double E should restore Board")

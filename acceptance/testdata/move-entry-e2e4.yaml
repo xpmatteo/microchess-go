@@ -1,0 +1,143 @@
+# Test sequence: C -> 1 -> 4 -> 3 -> 4 -> Enter -> Q
+# This tests move entry and execution: e2-e4 (pawn advance 2 squares)
+# Based on observed behavior from: printf 'C1434\rQ' | make play-6502
+
+name: "Move Entry and Execution: e2-e4"
+description: "Tests digit entry (1434) and move execution for white pawn e2→e4"
+
+steps:
+  - command: "DISPLAY"
+    should_continue: true
+    expected_display: |-
+      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
+       00 01 02 03 04 05 06 07
+      -------------------------
+      |BP|**|  |**|  |**|  |**|00
+      |**|  |**|  |**|  |**|  |10
+      |  |**|  |**|  |**|  |**|20
+      |**|  |**|  |**|  |**|  |30
+      |  |**|  |**|  |**|  |**|40
+      |**|  |**|  |**|  |**|  |50
+      |  |**|  |**|  |**|  |**|60
+      |**|  |**|  |**|  |**|  |70
+      -------------------------
+       00 01 02 03 04 05 06 07
+      00 00 00
+
+  - command: "C"
+    should_continue: true
+    expected_display: |-
+      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
+       00 01 02 03 04 05 06 07
+      -------------------------
+      |WR|WN|WB|WK|WQ|WB|WN|WR|00
+      |WP|WP|WP|WP|WP|WP|WP|WP|10
+      |  |**|  |**|  |**|  |**|20
+      |**|  |**|  |**|  |**|  |30
+      |  |**|  |**|  |**|  |**|40
+      |**|  |**|  |**|  |**|  |50
+      |BP|BP|BP|BP|BP|BP|BP|BP|60
+      |BR|BN|BB|BK|BQ|BB|BN|BR|70
+      -------------------------
+       00 01 02 03 04 05 06 07
+      CC CC CC
+
+  # After first digit '1': DIS = FF CC C1 (DIS1 reset to FF, building in DIS2/DIS3)
+  - command: "1"
+    should_continue: true
+    expected_display: |-
+      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
+       00 01 02 03 04 05 06 07
+      -------------------------
+      |WR|WN|WB|WK|WQ|WB|WN|WR|00
+      |WP|WP|WP|WP|WP|WP|WP|WP|10
+      |  |**|  |**|  |**|  |**|20
+      |**|  |**|  |**|  |**|  |30
+      |  |**|  |**|  |**|  |**|40
+      |**|  |**|  |**|  |**|  |50
+      |BP|BP|BP|BP|BP|BP|BP|BP|60
+      |BR|BN|BB|BK|BQ|BB|BN|BR|70
+      -------------------------
+       00 01 02 03 04 05 06 07
+      FF CC C1
+
+  # After second digit '4': DIS = FF CC 14
+  - command: "4"
+    should_continue: true
+    expected_display: |-
+      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
+       00 01 02 03 04 05 06 07
+      -------------------------
+      |WR|WN|WB|WK|WQ|WB|WN|WR|00
+      |WP|WP|WP|WP|WP|WP|WP|WP|10
+      |  |**|  |**|  |**|  |**|20
+      |**|  |**|  |**|  |**|  |30
+      |  |**|  |**|  |**|  |**|40
+      |**|  |**|  |**|  |**|  |50
+      |BP|BP|BP|BP|BP|BP|BP|BP|60
+      |BR|BN|BB|BK|BQ|BB|BN|BR|70
+      -------------------------
+       00 01 02 03 04 05 06 07
+      FF CC 14
+
+  # After third digit '3': DIS = FF C1 43
+  - command: "3"
+    should_continue: true
+    expected_display: |-
+      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
+       00 01 02 03 04 05 06 07
+      -------------------------
+      |WR|WN|WB|WK|WQ|WB|WN|WR|00
+      |WP|WP|WP|WP|WP|WP|WP|WP|10
+      |  |**|  |**|  |**|  |**|20
+      |**|  |**|  |**|  |**|  |30
+      |  |**|  |**|  |**|  |**|40
+      |**|  |**|  |**|  |**|  |50
+      |BP|BP|BP|BP|BP|BP|BP|BP|60
+      |BR|BN|BB|BK|BQ|BB|BN|BR|70
+      -------------------------
+       00 01 02 03 04 05 06 07
+      FF C1 43
+
+  # After fourth digit '4': DIS = 0E 14 34 (piece found at 14, from=14, to=34)
+  # Piece 0E = 14 decimal = pawn #14 (e-file pawn in initial setup)
+  - command: "4"
+    should_continue: true
+    expected_display: |-
+      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
+       00 01 02 03 04 05 06 07
+      -------------------------
+      |WR|WN|WB|WK|WQ|WB|WN|WR|00
+      |WP|WP|WP|WP|WP|WP|WP|WP|10
+      |  |**|  |**|  |**|  |**|20
+      |**|  |**|  |**|  |**|  |30
+      |  |**|  |**|  |**|  |**|40
+      |**|  |**|  |**|  |**|  |50
+      |BP|BP|BP|BP|BP|BP|BP|BP|60
+      |BR|BN|BB|BK|BQ|BB|BN|BR|70
+      -------------------------
+       00 01 02 03 04 05 06 07
+      0E 14 34
+
+  # After Enter: move executes, pawn moves from 14 to 34, DIS1 resets to FF
+  - command: "\r"
+    should_continue: true
+    expected_display: |-
+      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
+       00 01 02 03 04 05 06 07
+      -------------------------
+      |WR|WN|WB|WK|WQ|WB|WN|WR|00
+      |WP|WP|WP|WP|**|WP|WP|WP|10
+      |  |**|  |**|  |**|  |**|20
+      |**|  |**|  |WP|  |**|  |30
+      |  |**|  |**|  |**|  |**|40
+      |**|  |**|  |**|  |**|  |50
+      |BP|BP|BP|BP|BP|BP|BP|BP|60
+      |BR|BN|BB|BK|BQ|BB|BN|BR|70
+      -------------------------
+       00 01 02 03 04 05 06 07
+      FF 14 34
+
+  - command: "Q"
+    should_continue: false
+    expected_display: ""

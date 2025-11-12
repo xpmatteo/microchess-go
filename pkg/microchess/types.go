@@ -59,6 +59,15 @@ type GameState struct {
 	// Assembly: $F9, $FA, $FB (DIS1, DIS2, DIS3)
 	DIS1, DIS2, DIS3 uint8
 
+	// Move entry state
+	// PIECE tracks which piece is being moved (set after 4th digit entered)
+	// Assembly: $FB (PIECE - overlaps with DIS3 in assembly, but used differently)
+	SelectedPiece Piece
+
+	// DigitCount tracks how many digits (0-7) have been entered (0-4)
+	// Used to know when we have a complete move (4 digits)
+	DigitCount uint8
+
 	// I/O for display and input
 	out io.Writer
 }
@@ -97,6 +106,13 @@ func NewGame(out io.Writer) *GameState {
 	// However, to match the original's display, put one black pawn at 00
 	// This is the "garbage" state the original shows
 	g.BK[8] = 0x00 // Black pawn at position 00
+
+	// DIS1, DIS2, DIS3 start at 0x00 (uninitialized state)
+	// DIS1 will be set to 0xFF after 4th digit when piece is found
+	g.DIS1 = 0x00
+	g.DIS2 = 0x00
+	g.DIS3 = 0x00
+
 	return g
 }
 
@@ -192,16 +208,6 @@ func (g *GameState) Reverse() {
 	g.Reversed = !g.Reversed
 }
 
-// HandleCommand processes a single command string and returns true if the program should continue.
-// Returns false if the program should quit.
-// This is kept for backward compatibility but HandleCharacter is preferred for character-by-character input.
-func (g *GameState) HandleCommand(command string) bool {
-	if len(command) == 0 {
-		return true
-	}
-	return g.HandleCharacter(command[0])
-}
-
 // HandleCharacter processes a single character input and returns true if the program should continue.
 // Returns false if the program should quit.
 // This matches the original assembly's KIN routine which processes one character at a time.
@@ -249,24 +255,162 @@ func (g *GameState) HandleCharacter(char byte) bool {
 		return true
 
 	case '\r', '\n':
-		// Enter/Return key - just print newline and continue
-		_, _ = fmt.Fprintln(g.out, "\r")
+		// Enter/Return key
+		_, _ = fmt.Fprintln(g.out, "\r") // Clean newline after echoed char
+
+		// If we have 4 digits entered, execute the move
+		if g.DigitCount == 4 {
+			g.ExecuteMove()
+			g.Display()
+		}
+		return true
+
+	case '0', '1', '2', '3', '4', '5', '6', '7':
+		// Digit input for move entry (INPUT routine, assembly line 262)
+		_, _ = fmt.Fprintln(g.out, "\r") // Clean newline after echoed char
+
+		digit := uint8(char - '0')
+
+		// On first digit, reset DIS1 to 0xFF (no piece selected yet)
+		// This matches observed 6502 behavior where DIS1 shows FF during digit entry
+		if g.DigitCount == 0 {
+			g.DIS1 = 0xFF
+		}
+
+		// Rotate digit into move display (DISMV routine, line 625)
+		g.RotateDigitIntoMove(digit)
+		g.DigitCount++
+
+		// After 4th digit, find piece at from square (DIS2)
+		// Assembly lines 266-272 (SEARCH loop in INPUT)
+		if g.DigitCount == 4 {
+			fromSquare := board.Square(g.DIS2)
+			piece := g.FindPieceAtSquare(fromSquare)
+
+			// Store piece index in DIS1 and SelectedPiece
+			// Assembly line 271-272: STX DIS1 / STX PIECE
+			g.DIS1 = uint8(piece)
+			g.SelectedPiece = piece
+		}
+
+		// Display board to show updated LED display
+		g.Display()
 		return true
 
 	default:
 		// Unknown command - print error
 		_, _ = fmt.Fprintf(g.out, "\r\nUnknown command: %c\r\n", char)
-		_, _ = fmt.Fprintln(g.out, "Available commands: C (setup), E (reverse), P (print), Q (quit)")
+		_, _ = fmt.Fprintln(g.out, "Available commands: C (setup), E (reverse), P (print), Q (quit), 0-7 (move)")
 		return true
 	}
 }
 
+// ExecuteMove executes the move stored in SelectedPiece and DIS3 (target square).
+// This is a SIMPLIFIED version of the MOVE routine (assembly line 511) for Phase 4.
+//
+// Phase 4 behavior (no validation, basic capture):
+//   - Move Board[SelectedPiece] to DIS3
+//   - If piece at target square, mark as captured (set to 0xCC)
+//   - Reset DIS1 to 0xFF
+//   - Keep DIS2/DIS3 showing last move
+//
+// Full MOVE implementation (with undo stack) comes in Phase 6.
+//
+// Assembly MOVE routine (simplified for Phase 4):
+//   - Switch to alternate stack (SP2)
+//   - Search for piece at SQUARE (target), mark as captured if found
+//   - Update BOARD[PIECE] = SQUARE
+//   - Switch back to hardware stack
+func (g *GameState) ExecuteMove() {
+	// If no piece was found at the "from" square, can't execute move
+	if g.SelectedPiece == NoPiece {
+		// In Phase 4, we just skip execution silently (no validation messages)
+		// Reset digit count for next move
+		g.DigitCount = 0
+		g.DIS1 = 0xFF
+		return
+	}
+
+	targetSquare := board.Square(g.DIS3)
+
+	// Check if there's a piece at the target square (capture)
+	capturedPiece := g.FindPieceAtSquare(targetSquare)
+	if capturedPiece != NoPiece {
+		// Mark piece as captured by setting position to 0xCC (off-board sentinel)
+		// Assembly line 527: STA BOARD,X (stores $CC into captured piece's position)
+		g.Board[capturedPiece] = 0xCC
+	}
+
+	// Move the selected piece to target square
+	// Assembly line 535: STA BOARD,X (stores SQUARE into PIECE's position)
+	g.Board[g.SelectedPiece] = targetSquare
+
+	// Reset DIS1 to 0xFF (no piece selected)
+	// DIS2 and DIS3 keep showing the last move
+	g.DIS1 = 0xFF
+
+	// Reset digit count for next move
+	g.DigitCount = 0
+}
+
+// FindPieceAtSquare searches the Board array for a piece at the given square.
+// Returns the piece index (0-15) if found, or NoPiece (0xFF) if no piece at that square.
+//
+// This implements the SEARCH loop from INPUT routine (assembly lines 266-271):
+//
+//	SEARCH   LDA BOARD,X      ; Load piece position
+//	         CMP DIS2         ; Compare with from square
+//	         BEQ HERE         ; Found it!
+//	         DEX              ; Next piece
+//	         BPL SEARCH       ; Loop if X >= 0
+//
+// Assembly searches from X=$1F down to X=$00, checking both BOARD and BK arrays.
+// For Phase 4, we only search the current player's Board array.
+func (g *GameState) FindPieceAtSquare(sq board.Square) Piece {
+	// Search Board array (indices 0-15)
+	for piece := Piece(0); piece < 16; piece++ {
+		if g.Board[piece] == sq {
+			return piece
+		}
+	}
+	// Not found
+	return NoPiece
+}
+
 // RotateDigitIntoMove implements the DISMV routine from assembly (lines 625-633).
-// This rotates a digit into the move display registers DIS2/DIS3.
-// TODO: Full implementation scheduled for future move input phase.
+// This rotates a digit (0-7) into the move display registers DIS2/DIS3.
+//
+// The assembly shifts DIS3 left 4 bits, then shifts DIS2 left 4 bits with carry,
+// then ORs the new digit into DIS3. After 4 digits:
+//
+//	DIS2 = from_square (first 2 digits)
+//	DIS3 = to_square (last 2 digits)
+//
+// Assembly reference:
+//
+//	DISMV    LDX #$04          ; Loop 4 times (shift 4 bits)
+//	DROL     ASL DIS3          ; Shift DIS3 left
+//	         ROL DIS2          ; Shift DIS2 left with carry
+//	         DEX
+//	         BNE DROL
+//	         ORA DIS3          ; OR digit into DIS3
+//	         STA DIS3
 func (g *GameState) RotateDigitIntoMove(digit uint8) {
-	// Stub for future implementation
-	panic("RotateDigitIntoMove not yet implemented")
+	// Shift left 4 bits: DIS3 << 4, carry to DIS2, DIS2 << 4
+	// In assembly this is done with 4 iterations of ASL/ROL
+	// In Go we can do it directly with bit operations
+
+	// Extract the high nibble of DIS3 (will become low nibble of DIS2)
+	carry := (g.DIS3 & 0xF0) >> 4
+
+	// Shift DIS3 left 4 bits
+	g.DIS3 = g.DIS3 << 4
+
+	// Shift DIS2 left 4 bits and add carry from DIS3
+	g.DIS2 = (g.DIS2 << 4) | carry
+
+	// OR the new digit into DIS3
+	g.DIS3 = g.DIS3 | digit
 }
 
 // Display prints the chess board in the style of the original POUT routine (line 702).

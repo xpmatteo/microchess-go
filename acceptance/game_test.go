@@ -36,7 +36,7 @@ func TestUnknownCommand(t *testing.T) {
 	var buf bytes.Buffer
 	game := microchess.NewGame(&buf)
 
-	shouldContinue := game.HandleCommand("X")
+	shouldContinue := game.HandleCharacter('X')
 	assert.True(t, shouldContinue, "Unknown command should not quit")
 
 	output := buf.String()
@@ -102,7 +102,7 @@ func runTestCase(t *testing.T, tc testCase) {
 			game.Display()
 			shouldContinue = true
 		} else {
-			shouldContinue = game.HandleCommand(step.Command)
+			shouldContinue = game.HandleCharacter(step.Command[0])
 		}
 
 		assert.Equal(t, step.ShouldContinue, shouldContinue,
