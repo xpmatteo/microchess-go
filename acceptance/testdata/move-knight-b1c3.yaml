@@ -1,8 +1,10 @@
-# Test sequence: start -> setup -> quit
-# Simulates: printf 'C\nQ\n' | go run cmd/microchess/main.go
+# Test sequence: setup -> move knight from b1 to c3 -> quit
+# Command sequence: C0122\rQ
+# Tests moving a knight (position 01 to 22 in octal, b1 to c3 in algebraic)
 
-name: "Setup and Quit Sequence"
-description: "Tests basic setup command followed by quit"
+name: "Setup and Move Knight b1-c3"
+description: "Tests moving white knight from b1 (01) to c3 (22)"
+final_reversed: false  # Board orientation unchanged
 
 steps:
   - commands: "DISPLAY"
@@ -40,6 +42,25 @@ steps:
       -------------------------
        00 01 02 03 04 05 06 07
       CC CC CC
+
+  # Execute move: 0122\r (knight from b1 to c3)
+  - commands: "0122\r"
+    should_continue: true
+    expected_display: |-
+      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
+       00 01 02 03 04 05 06 07
+      -------------------------
+      |WR|**|WB|WK|WQ|WB|WN|WR|00
+      |WP|WP|WP|WP|WP|WP|WP|WP|10
+      |  |**|WN|**|  |**|  |**|20
+      |**|  |**|  |**|  |**|  |30
+      |  |**|  |**|  |**|  |**|40
+      |**|  |**|  |**|  |**|  |50
+      |BP|BP|BP|BP|BP|BP|BP|BP|60
+      |BR|BN|BB|BK|BQ|BB|BN|BR|70
+      -------------------------
+       00 01 02 03 04 05 06 07
+      FF 01 22
 
   - commands: "Q"
     should_continue: false

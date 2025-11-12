@@ -6,7 +6,7 @@ name: "Move Entry and Execution: e2-e4"
 description: "Tests digit entry (1434) and move execution for white pawn e2→e4"
 
 steps:
-  - command: "DISPLAY"
+  - commands: "DISPLAY"
     should_continue: true
     expected_display: |-
       MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
@@ -24,7 +24,7 @@ steps:
        00 01 02 03 04 05 06 07
       00 00 00
 
-  - command: "C"
+  - commands: "C"
     should_continue: true
     expected_display: |-
       MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
@@ -43,7 +43,7 @@ steps:
       CC CC CC
 
   # After first digit '1': DIS = FF CC C1 (DIS1 reset to FF, building in DIS2/DIS3)
-  - command: "1"
+  - commands: "1"
     should_continue: true
     expected_display: |-
       MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
@@ -62,7 +62,7 @@ steps:
       FF CC C1
 
   # After second digit '4': DIS = FF CC 14
-  - command: "4"
+  - commands: "4"
     should_continue: true
     expected_display: |-
       MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
@@ -81,7 +81,7 @@ steps:
       FF CC 14
 
   # After third digit '3': DIS = FF C1 43
-  - command: "3"
+  - commands: "3"
     should_continue: true
     expected_display: |-
       MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
@@ -101,7 +101,7 @@ steps:
 
   # After fourth digit '4': DIS = 0E 14 34 (piece found at 14, from=14, to=34)
   # Piece 0E = 14 decimal = pawn #14 (e-file pawn in initial setup)
-  - command: "4"
+  - commands: "4"
     should_continue: true
     expected_display: |-
       MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
@@ -120,7 +120,7 @@ steps:
       0E 14 34
 
   # After Enter: move executes, pawn moves from 14 to 34, DIS1 resets to FF
-  - command: "\r"
+  - commands: "\r"
     should_continue: true
     expected_display: |-
       MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
@@ -138,6 +138,6 @@ steps:
        00 01 02 03 04 05 06 07
       FF 14 34
 
-  - command: "Q"
+  - commands: "Q"
     should_continue: false
     expected_display: ""

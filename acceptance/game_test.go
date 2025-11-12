@@ -24,11 +24,11 @@ type testCase struct {
 	Skip          bool          `yaml:"skip"`
 }
 
-// commandStep represents a single command and its expected output
+// commandStep represents one or more commands and the expected final output
 type commandStep struct {
-	Command         string `yaml:"command"`
-	ShouldContinue  bool   `yaml:"should_continue"`
-	ExpectedDisplay string `yaml:"expected_display"`
+	Commands        string `yaml:"commands"`         // One or more commands to execute
+	ShouldContinue  bool   `yaml:"should_continue"`  // Expected continue state after all commands
+	ExpectedDisplay string `yaml:"expected_display"` // Expected final display after all commands
 }
 
 // TestUnknownCommand tests that unknown commands are handled gracefully
@@ -95,26 +95,38 @@ func runTestCase(t *testing.T, tc testCase) {
 	game := microchess.NewGame(&buf)
 
 	for i, step := range tc.Steps {
+		// Reset buffer to capture output for this step
 		buf.Reset()
 
 		var shouldContinue bool
-		if step.Command == "DISPLAY" {
+		if step.Commands == "DISPLAY" {
 			game.Display()
 			shouldContinue = true
 		} else {
-			shouldContinue = game.HandleCharacter(step.Command[0])
+			// Execute all commands in sequence, accumulating output
+			for _, ch := range step.Commands {
+				shouldContinue = game.HandleCharacter(byte(ch))
+				if !shouldContinue {
+					break
+				}
+			}
 		}
 
 		assert.Equal(t, step.ShouldContinue, shouldContinue,
-			"Step %d (%s): shouldContinue mismatch", i, step.Command)
+			"Step %d (%s): shouldContinue mismatch", i, step.Commands)
+
+		// Extract only the LAST display from the output (for multi-char commands)
+		// This matches the behavior we expect: only check the final result
+		allOutput := buf.String()
+		lastDisplay := extractLastDisplay(allOutput)
 
 		// Normalize line endings (convert \r\n to \n) and trim whitespace
 		// This allows tests to work in both raw terminal mode (\r\n) and normal mode (\n)
 		expected := strings.TrimSpace(step.ExpectedDisplay)
-		actual := strings.ReplaceAll(buf.String(), "\r\n", "\n")
+		actual := strings.ReplaceAll(lastDisplay, "\r\n", "\n")
 		actual = strings.TrimSpace(actual)
 		assert.Equal(t, expected, actual,
-			"Step %d (%s): display output mismatch", i, step.Command)
+			"Step %d (%s): display output mismatch", i, step.Commands)
 	}
 
 	// Verify final state if specified
@@ -122,4 +134,18 @@ func runTestCase(t *testing.T, tc testCase) {
 		assert.Equal(t, tc.FinalReversed, game.Reversed,
 			"Final reversed state should match expected: %v", tc.FinalReversed)
 	}
+}
+
+// extractLastDisplay extracts the last complete board display from output
+// For multi-character commands that generate multiple displays, we only want the final one
+func extractLastDisplay(output string) string {
+	// Split by MicroChess header to find display boundaries
+	displays := strings.Split(output, "MicroChess")
+	if len(displays) <= 1 {
+		return output // No header found or only one display
+	}
+
+	// Get the last display and prepend the header back
+	lastDisplay := displays[len(displays)-1]
+	return "MicroChess" + lastDisplay
 }

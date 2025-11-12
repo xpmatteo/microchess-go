@@ -127,8 +127,8 @@ func run6502TestCase(t *testing.T, tc testCase) {
 
 	// Build input string from commands (skip DISPLAY as it's automatic)
 	for _, step := range tc.Steps {
-		if step.Command != "DISPLAY" {
-			inputBuf.WriteString(step.Command + "\n")
+		if step.Commands != "DISPLAY" {
+			inputBuf.WriteString(step.Commands)
 		}
 	}
 
@@ -171,16 +171,32 @@ func run6502TestCase(t *testing.T, tc testCase) {
 		t.Logf("Display %d status: %s", i, statusLine)
 	}
 
-	// Compare each display against expected output
+	// Compare each step's expected display against the corresponding 6502 display
+	// For multi-character commands, we skip intermediate displays and only check the final one
 	displayIdx := 0
 	for i, step := range tc.Steps {
 		if step.ExpectedDisplay == "" {
 			continue // Skip steps with no expected display (like Q command)
 		}
 
+		// Count how many character inputs this step will generate
+		// This helps us skip intermediate displays for multi-character commands
+		numChars := 0
+		if step.Commands != "DISPLAY" {
+			numChars = len(step.Commands)
+		}
+
+		// Skip ahead to the final display for this step
+		// For single-char commands, this is just the next display
+		// For multi-char commands, we need to skip the intermediate ones
+		if numChars > 1 {
+			// Skip intermediate displays (numChars - 1)
+			displayIdx += numChars - 1
+		}
+
 		if displayIdx >= len(uniqueDisplays) {
 			t.Errorf("Step %d (%s): No 6502 display available (expected %d displays, got %d)",
-				i, step.Command, displayIdx+1, len(uniqueDisplays))
+				i, step.Commands, displayIdx+1, len(uniqueDisplays))
 			continue
 		}
 
@@ -191,9 +207,9 @@ func run6502TestCase(t *testing.T, tc testCase) {
 
 		if expected != actual {
 			t.Errorf("Step %d (%s): Display mismatch\n=== EXPECTED ===\n%s\n=== ACTUAL (6502) ===\n%s\n=== END ===",
-				i, step.Command, expected, actual)
+				i, step.Commands, expected, actual)
 		} else {
-			t.Logf("Step %d (%s): Display matches ✓", i, step.Command)
+			t.Logf("Step %d (%s): Display matches ✓", i, step.Commands)
 		}
 
 		displayIdx++
