@@ -28,51 +28,6 @@ Or run directly:
 go run cmd/microchess/main.go
 ```
 
-## Current Features
-
-The program starts with an empty board (matching the original 6502 assembly behavior) and accepts:
-
-- **C** - Setup the board to initial chess position
-- **Q** - Quit the program
-
-## Example Session
-
-```
-$ ./microchess
-MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
- 00 01 02 03 04 05 06 07
--------------------------
-|BP|**|  |**|  |**|  |**|00
-|**|  |**|  |**|  |**|  |10
-|  |**|  |**|  |**|  |**|20
-|**|  |**|  |**|  |**|  |30
-|  |**|  |**|  |**|  |**|40
-|**|  |**|  |**|  |**|  |50
-|  |**|  |**|  |**|  |**|60
-|**|  |**|  |**|  |**|  |70
--------------------------
- 00 01 02 03 04 05 06 07
-00 00 00
-
-? C
-MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
- 00 01 02 03 04 05 06 07
--------------------------
-|WR|WN|WB|WK|WQ|WB|WN|WR|00
-|WP|WP|WP|WP|WP|WP|WP|WP|10
-|  |**|  |**|  |**|  |**|20
-|**|  |**|  |**|  |**|  |30
-|  |**|  |**|  |**|  |**|40
-|**|  |**|  |**|  |**|  |50
-|BP|BP|BP|BP|BP|BP|BP|BP|60
-|BR|BN|BB|BK|BQ|BB|BN|BR|70
--------------------------
- 00 01 02 03 04 05 06 07
-CC CC CC
-
-? Q
-```
-
 ## Testing
 
 Run the test suite:
@@ -89,8 +44,6 @@ Run only acceptance tests:
 ```bash
 go test ./acceptance/...
 ```
-
-All core types, board representation, and user commands are covered by tests.
 
 ## Architecture
 
@@ -114,12 +67,4 @@ The original MicroChess 6502 assembly source code and documentation are in the `
 - **Original Author**: Peter Jennings (1976)
 - **Serial Port Adaptation**: Daryl Rictor (2002)
 - **OCR Corrections**: Bill Forster (2005)
-- **Go Port**: 2025
-
-## License
-
-This is a historical preservation project. The original MicroChess was distributed as public domain software.
-
-## Learn More
-
-See `doc/PORTING_PLAN.md` for the complete development roadmap.
+- **Go Port**: Matteo Vaccari 2025 with the help of Claude Code
