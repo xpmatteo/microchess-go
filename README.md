@@ -4,23 +4,11 @@ A Go port of Peter Jennings' historic 1976 MicroChess program - one of the first
 
 ## About
 
-This project aims to make the remarkable MicroChess program easier to understand while preserving its exact chess logic and algorithms. The original program packed a complete chess AI into just ~1.5KB of 6502 assembly code!
+This project is an experiment in AI-assisted modernization: how do we plan and execute a gradual port, given that we want to move away from 6502 assembly?
+
+We also aim to make the remarkable MicroChess program easier to understand while preserving its exact chess logic and algorithms. The original program packed a complete chess AI into just ~1.5KB of 6502 assembly code!
 
 ## Project Status
-
-**Phase 2 Complete** - Basic board display and initial setup
-
-✅ Implemented:
-- 0x88 board representation
-- Basic types (Square, Piece, GameState)
-- Initial board setup
-- Board display in original terminal style
-- Simple REPL with quit command
-
-🚧 Coming Next (Phase 3):
-- Board setup command ('C')
-- Board reverse command ('E')
-- Interactive board manipulation
 
 ## How to Build
 
