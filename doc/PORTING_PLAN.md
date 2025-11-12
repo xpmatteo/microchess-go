@@ -173,7 +173,7 @@ go run cmd/microchess/main.go
 
 ---
 
-### ⬜ Phase 4: Move Entry and Display (Manual Chess!)
+### ✅ Phase 4: Move Entry and Display (Manual Chess!) - COMPLETED
 
 **Goal**: Enter and display moves (no validation yet)
 
