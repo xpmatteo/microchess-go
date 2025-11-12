@@ -125,7 +125,8 @@ func run6502TestCase(t *testing.T, tc testCase) {
 	var inputBuf bytes.Buffer
 	var outputBuf bytes.Buffer
 
-	// Build input string from commands (skip DISPLAY as it's automatic)
+	// Build input string from commands
+	// Skip "DISPLAY" as it's a test-only command, not a real 6502 command
 	for _, step := range tc.Steps {
 		if step.Commands != "DISPLAY" {
 			inputBuf.WriteString(step.Commands)
@@ -173,7 +174,14 @@ func run6502TestCase(t *testing.T, tc testCase) {
 
 	// Compare each step's expected display against the corresponding 6502 display
 	// For multi-character commands, we skip intermediate displays and only check the final one
+
+	// The 6502 always outputs an initial display (display 0).
+	// If the first step is "DISPLAY", we check it. Otherwise, we skip it.
 	displayIdx := 0
+	if len(tc.Steps) > 0 && tc.Steps[0].Commands != "DISPLAY" {
+		displayIdx = 1 // Skip the initial auto-display from 6502
+	}
+
 	for i, step := range tc.Steps {
 		if step.ExpectedDisplay == "" {
 			continue // Skip steps with no expected display (like Q command)

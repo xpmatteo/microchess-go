@@ -1,7 +1,7 @@
 # Test sequence: start -> setup -> reverse -> reverse -> quit
 # Simulates: printf 'C\nE\nE\nQ\n' | go run cmd/microchess/main.go
 
-name: "Setup, Reverse, and Quit Sequence"
+name: "Double Reverse"
 description: "Tests double reverse returning board to original orientation"
 final_reversed: false  # After double E, board should be back to normal
 

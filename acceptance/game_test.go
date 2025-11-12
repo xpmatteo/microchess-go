@@ -99,6 +99,7 @@ func runTestCase(t *testing.T, tc testCase) {
 		buf.Reset()
 
 		var shouldContinue bool
+		// Special case: "DISPLAY" is a test-only command to show the current board
 		if step.Commands == "DISPLAY" {
 			game.Display()
 			shouldContinue = true

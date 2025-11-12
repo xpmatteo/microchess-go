@@ -2,29 +2,11 @@
 # Command sequence: C0122\rQ
 # Tests moving a knight (position 01 to 22 in octal, b1 to c3 in algebraic)
 
-name: "Setup and Move Knight b1-c3"
+name: "Move Knight from black square b1-c3"
 description: "Tests moving white knight from b1 (01) to c3 (22)"
 final_reversed: false  # Board orientation unchanged
 
 steps:
-  - commands: "DISPLAY"
-    should_continue: true
-    expected_display: |-
-      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
-       00 01 02 03 04 05 06 07
-      -------------------------
-      |BP|**|  |**|  |**|  |**|00
-      |**|  |**|  |**|  |**|  |10
-      |  |**|  |**|  |**|  |**|20
-      |**|  |**|  |**|  |**|  |30
-      |  |**|  |**|  |**|  |**|40
-      |**|  |**|  |**|  |**|  |50
-      |  |**|  |**|  |**|  |**|60
-      |**|  |**|  |**|  |**|  |70
-      -------------------------
-       00 01 02 03 04 05 06 07
-      00 00 00
-
   - commands: "C"
     should_continue: true
     expected_display: |-

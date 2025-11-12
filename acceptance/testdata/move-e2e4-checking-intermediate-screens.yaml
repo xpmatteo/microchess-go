@@ -2,7 +2,7 @@
 # This tests move entry and execution: e2-e4 (pawn advance 2 squares)
 # Based on observed behavior from: printf 'C1434\rQ' | make play-6502
 
-name: "Move Entry and Execution: e2-e4"
+name: "Move Entry and Execution Checking All Intermediate Screens: e2-e4"
 description: "Tests digit entry (1434) and move execution for white pawn e2→e4"
 
 steps:
