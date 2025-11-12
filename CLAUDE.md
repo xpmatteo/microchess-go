@@ -64,6 +64,20 @@ When input is piped (`printf 'CPQ' | ./microchess`), the program detects this us
 - **Handles EOF gracefully**: Exits cleanly when pipe closes
 - **Enables automated testing**: Allows scripted input for acceptance tests and comparisons
 
+### Move Entry Format
+
+**CRITICAL**: The 2002 Daryl Rictor serial terminal version uses a different move entry format than the original 1976 KIM-1 version:
+
+- **Move entry**: Enter 4 digits (FROM square, TO square in octal) followed by CARRIAGE RETURN (`\r`)
+  - Example: `0122\r` moves the knight at position 01 to position 22 (b1 to c3)
+  - Example: `1333\r` moves the piece at position 13 to position 33
+  - The display shows the piece code and coordinates as you type: `06 01 22` (06 = knight) or `0F 13 33` (0F = pawn)
+  - After the move executes, the FROM square shows `FF` (empty) and the piece appears at the TO square
+- **USE CARRIAGE RETURN (`\r`), NOT NEWLINE (`\n`)** - This is crucial for move execution
+- **DO NOT use the `F` key** - The original 1976 manual describes pressing `F` to execute moves, but this does NOT apply to our serial terminal version
+- **Board coordinates**: Octal notation where first digit is rank (0-7 from white's side), second digit is file (0-7 from left)
+- **Single-letter commands use any line ending**: Commands like `C`, `E`, `P`, `Q` work with either `\r` or `\n`
+
 ### Implementation Details
 
 - **Auto-detection**: Uses `term.IsTerminal(os.Stdin.Fd())` to detect terminal vs pipe
@@ -154,23 +168,6 @@ printf 'CEQ' | make play-6502 > 6502-output.txt
 diff go-output.txt 6502-output.txt
 ```
 
-
-## Running the Original 6502 Code
-
-The original 1976 MicroChess assembly code can be run in the go6502 emulator with real I/O!
-
-Example:
-
-```bash
-printf 'CQ' | make play-6502
-```
-
-This way we can see what is output by the original program in response to our input
-
-**See**: `go6502/RUNNING_MICROCHESS.md` for complete details
-
-This allows direct comparison between the original 6502 code and the Go port!
-
 ## Testing Philosophy
 
 ### Test Types
@@ -181,25 +178,19 @@ This allows direct comparison between the original 6502 code and the Go port!
 - Use `github.com/stretchr/testify` for assertions
 
 **Acceptance Tests** (`acceptance/`):
+- ALWAYS create acceptance tests before implementing new features
+- ALWAYS create acceptance tests by observing the 6502 behaviour (see below)
 - YAML-based test fixtures in `acceptance/testdata/*.yaml`
 - Define command sequences and expected display output
 - Test complete user workflows (setup, reverse, etc.)
 - Compare Go port output to expected board states
 - Line endings are normalized (`\r\n` → `\n`) for cross-platform compatibility
+- Runs the same input against both 6502 code and Go code
 
-**6502 Comparison Tests** (`acceptance/emulator_test.go`):
-- Feed identical inputs to both Go port and original 6502 emulator
-- Parse and compare board displays from both implementations
-- Verify LED display values match (DIS1, DIS2, DIS3)
-- Ensure behavior is byte-for-byte equivalent to 1976 original
 
 ### Test Guidelines
 
 - **Always run `golangci-lint run`** before concluding any implementation step
-- **Use `t.Skip()`** for tests of unimplemented functionality (e.g., move input)
-  - Tests should compile but skip execution with clear message
-  - Example: `t.Skip("Move input not yet implemented - scheduled for future phase")`
-- **YAML test format**: See `acceptance/testdata/setup-and-quit.yaml` for structure
 - **Piped input testing**: Use `printf 'CPQ' | go run ./cmd/microchess` for quick validation
 - **Note**: `timeout` command is not installed; do not try to use it
 
