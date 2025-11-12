@@ -10,6 +10,8 @@ We also aim to make the remarkable MicroChess program easier to understand while
 
 ## Project Status
 
+This experiment is currently (November 2025) in progress
+
 ## How to Build
 
 ```bash
