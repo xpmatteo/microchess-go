@@ -126,8 +126,11 @@ func runTestCase(t *testing.T, tc testCase) {
 		expected := strings.TrimSpace(step.ExpectedDisplay)
 		actual := strings.ReplaceAll(lastDisplay, "\r\n", "\n")
 		actual = strings.TrimSpace(actual)
-		assert.Equal(t, expected, actual,
-			"Step %d (%s): display output mismatch", i, step.Commands)
+		// Not using testify for this assertion, so that we produce a more readable error message
+		if expected != actual {
+			t.Errorf("Step %d (%s): Display mismatch\n=== EXPECTED ===\n%s\n=== ACTUAL (Go) ===\n%s\n=== END ===",
+				i, step.Commands, expected, actual)
+		}
 	}
 
 	// Verify final state if specified
