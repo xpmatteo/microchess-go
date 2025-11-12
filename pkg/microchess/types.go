@@ -258,8 +258,10 @@ func (g *GameState) HandleCharacter(char byte) bool {
 		// Enter/Return key
 		_, _ = fmt.Fprintln(g.out, "\r") // Clean newline after echoed char
 
-		// If we have 4 digits entered, execute the move
-		if g.DigitCount == 4 {
+		// If we have 4 or more digits entered, execute the move using the last 4 digits
+		// The last 4 digits are stored in DIS2 (from square) and DIS3 (to square)
+		// This allows users to enter extra digits (5, 6, 7, 8, ...) and still execute
+		if g.DigitCount >= 4 {
 			g.ExecuteMove()
 		}
 		// Always display board after carriage return (even if no move executed)
@@ -291,9 +293,10 @@ func (g *GameState) HandleCharacter(char byte) bool {
 		g.RotateDigitIntoMove(digit)
 		g.DigitCount++
 
-		// After 4th digit, find piece at from square (DIS2)
+		// After 4 or more digits, always find piece at from square (DIS2)
+		// The last 4 digits in the rolling buffer define the current move
 		// Assembly lines 266-272 (SEARCH loop in INPUT)
-		if g.DigitCount == 4 {
+		if g.DigitCount >= 4 {
 			fromSquare := board.Square(g.DIS2)
 			piece := g.FindPieceAtSquare(fromSquare)
 

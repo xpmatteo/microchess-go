@@ -1,16 +1,16 @@
-# Test sequence: C -> 11434 (5 digits) -> Enter -> Q
-# This tests that entering 5 digits uses the LAST 4 digits for the move
-# Command: C11434\rQ
-# Based on observed behavior from: printf 'C11434\rQ' | make play-6502
+# Test sequence: C -> 1434 (complete move e2-e4) -> 1424 (replace with e2-e3) -> Enter -> Q
+# This tests changing your mind mid-entry by entering 8 digits total
+# Command: C14341424\rQ
+# Based on observed behavior from: printf 'C14341424\rQ' | make play-6502
 #
 # Expected behavior:
-# - First 4 digits (1143): build move from square 11 to square 43, find piece 0A (pawn at 11)
-# - 5th digit '4': digits rotate, now from square 14 to square 34, find piece 0E (pawn at 14)
-# - Carriage return: executes move using LAST 4 digits (14->34), NOT first 4 digits (11->43)
-# - Result: pawn moves from e2 (14) to e4 (34), NOT from b2 (11) to d4 (43)
+# - First 4 digits (1434): build move e2-e4, find piece 0E at 14, DIS = 0E 14 34
+# - Digits 5-8 (1424): continue rotating, building NEW move e2-e3, DIS = 0E 14 24
+# - Carriage return: executes the LAST complete 4-digit move (e2-e3), NOT the first one
+# - Result: pawn moves from e2 (14) to e3 (24), NOT to e4 (34)
 
-name: "Five Digit Input - Uses Last 4 Digits"
-description: "Tests that entering 5 digits (11434) uses last 4 (1434) for move execution"
+name: "Change Move Mid-Entry (8 digits)"
+description: "User enters 1434 (e2-e4) then changes to 1424 (e2-e3) before pressing Enter"
 
 steps:
   - commands: "C"
@@ -31,85 +31,9 @@ steps:
        00 01 02 03 04 05 06 07
       CC CC CC
 
-  # After 1st digit '1': DIS = FF CC C1
-  - commands: "1"
-    should_continue: true
-    expected_display: |-
-      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
-       00 01 02 03 04 05 06 07
-      -------------------------
-      |WR|WN|WB|WK|WQ|WB|WN|WR|00
-      |WP|WP|WP|WP|WP|WP|WP|WP|10
-      |  |**|  |**|  |**|  |**|20
-      |**|  |**|  |**|  |**|  |30
-      |  |**|  |**|  |**|  |**|40
-      |**|  |**|  |**|  |**|  |50
-      |BP|BP|BP|BP|BP|BP|BP|BP|60
-      |BR|BN|BB|BK|BQ|BB|BN|BR|70
-      -------------------------
-       00 01 02 03 04 05 06 07
-      FF CC C1
-
-  # After 2nd digit '1': DIS = FF CC 11
-  - commands: "1"
-    should_continue: true
-    expected_display: |-
-      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
-       00 01 02 03 04 05 06 07
-      -------------------------
-      |WR|WN|WB|WK|WQ|WB|WN|WR|00
-      |WP|WP|WP|WP|WP|WP|WP|WP|10
-      |  |**|  |**|  |**|  |**|20
-      |**|  |**|  |**|  |**|  |30
-      |  |**|  |**|  |**|  |**|40
-      |**|  |**|  |**|  |**|  |50
-      |BP|BP|BP|BP|BP|BP|BP|BP|60
-      |BR|BN|BB|BK|BQ|BB|BN|BR|70
-      -------------------------
-       00 01 02 03 04 05 06 07
-      FF CC 11
-
-  # After 3rd digit '4': DIS = FF C1 14
-  - commands: "4"
-    should_continue: true
-    expected_display: |-
-      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
-       00 01 02 03 04 05 06 07
-      -------------------------
-      |WR|WN|WB|WK|WQ|WB|WN|WR|00
-      |WP|WP|WP|WP|WP|WP|WP|WP|10
-      |  |**|  |**|  |**|  |**|20
-      |**|  |**|  |**|  |**|  |30
-      |  |**|  |**|  |**|  |**|40
-      |**|  |**|  |**|  |**|  |50
-      |BP|BP|BP|BP|BP|BP|BP|BP|60
-      |BR|BN|BB|BK|BQ|BB|BN|BR|70
-      -------------------------
-       00 01 02 03 04 05 06 07
-      FF C1 14
-
-  # After 4th digit '3': DIS = 0A 11 43 (piece 0A found at square 11, target 43)
-  - commands: "3"
-    should_continue: true
-    expected_display: |-
-      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
-       00 01 02 03 04 05 06 07
-      -------------------------
-      |WR|WN|WB|WK|WQ|WB|WN|WR|00
-      |WP|WP|WP|WP|WP|WP|WP|WP|10
-      |  |**|  |**|  |**|  |**|20
-      |**|  |**|  |**|  |**|  |30
-      |  |**|  |**|  |**|  |**|40
-      |**|  |**|  |**|  |**|  |50
-      |BP|BP|BP|BP|BP|BP|BP|BP|60
-      |BR|BN|BB|BK|BQ|BB|BN|BR|70
-      -------------------------
-       00 01 02 03 04 05 06 07
-      0A 11 43
-
-  # After 5th digit '4': DIS = 0E 14 34 (piece 0E found at square 14, target 34)
-  # This is the KEY behavior: the last 4 digits define the move
-  - commands: "4"
+  # First 4 digits: 1434 (e2-e4)
+  # After 4th digit, piece found: 0E 14 34
+  - commands: "1434"
     should_continue: true
     expected_display: |-
       MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
@@ -127,8 +51,48 @@ steps:
        00 01 02 03 04 05 06 07
       0E 14 34
 
-  # Carriage return: executes move 14->34 (e2-e4), NOT 11->43!
-  # Pawn moves from rank 1 file 4 to rank 3 file 4
+  # Digits 5-6: 14 (start of new move)
+  # DIS1 reset to FF, digits rotate: FF 34 14
+  - commands: "14"
+    should_continue: true
+    expected_display: |-
+      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
+       00 01 02 03 04 05 06 07
+      -------------------------
+      |WR|WN|WB|WK|WQ|WB|WN|WR|00
+      |WP|WP|WP|WP|WP|WP|WP|WP|10
+      |  |**|  |**|  |**|  |**|20
+      |**|  |**|  |**|  |**|  |30
+      |  |**|  |**|  |**|  |**|40
+      |**|  |**|  |**|  |**|  |50
+      |BP|BP|BP|BP|BP|BP|BP|BP|60
+      |BR|BN|BB|BK|BQ|BB|BN|BR|70
+      -------------------------
+       00 01 02 03 04 05 06 07
+      FF 34 14
+
+  # Digits 7-8: 24 (complete new move e2-e3)
+  # After 8th digit (4th of current sequence), piece found: 0E 14 24
+  - commands: "24"
+    should_continue: true
+    expected_display: |-
+      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
+       00 01 02 03 04 05 06 07
+      -------------------------
+      |WR|WN|WB|WK|WQ|WB|WN|WR|00
+      |WP|WP|WP|WP|WP|WP|WP|WP|10
+      |  |**|  |**|  |**|  |**|20
+      |**|  |**|  |**|  |**|  |30
+      |  |**|  |**|  |**|  |**|40
+      |**|  |**|  |**|  |**|  |50
+      |BP|BP|BP|BP|BP|BP|BP|BP|60
+      |BR|BN|BB|BK|BQ|BB|BN|BR|70
+      -------------------------
+       00 01 02 03 04 05 06 07
+      0E 14 24
+
+  # Carriage return: executes move 14->24 (e2-e3), NOT 14->34 (e2-e4)!
+  # Pawn moves from rank 1 to rank 2 (one square forward)
   - commands: "\r"
     should_continue: true
     expected_display: |-
@@ -137,15 +101,15 @@ steps:
       -------------------------
       |WR|WN|WB|WK|WQ|WB|WN|WR|00
       |WP|WP|WP|WP|**|WP|WP|WP|10
-      |  |**|  |**|  |**|  |**|20
-      |**|  |**|  |WP|  |**|  |30
+      |  |**|  |**|WP|**|  |**|20
+      |**|  |**|  |**|  |**|  |30
       |  |**|  |**|  |**|  |**|40
       |**|  |**|  |**|  |**|  |50
       |BP|BP|BP|BP|BP|BP|BP|BP|60
       |BR|BN|BB|BK|BQ|BB|BN|BR|70
       -------------------------
        00 01 02 03 04 05 06 07
-      FF 14 34
+      FF 14 24
 
   - commands: "Q"
     should_continue: false
