@@ -1,0 +1,55 @@
+# Test sequence: C -> 1400 -> Enter -> Q
+# This tests moving a piece to an occupied square (friendly piece)
+# Move: e2 pawn (14) to a1 rook square (00)
+# Based on observed behavior from: printf 'C1400\rQ' | make play-6502
+#
+# Expected behavior in Phase 4:
+# - No move validation - the move executes
+# - Pawn at 14 moves to 00
+# - Rook at 00 is "captured" (marked 0xCC, disappears from board)
+# - This is a bug/feature of Phase 4 - validation comes in Phase 5
+
+name: "Move to Occupied Square (Friendly Capture)"
+description: "Tests moving pawn from e2 (14) to a1 (00), capturing own rook"
+
+steps:
+  - commands: "C"
+    should_continue: true
+    expected_display: |-
+      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
+       00 01 02 03 04 05 06 07
+      -------------------------
+      |WR|WN|WB|WK|WQ|WB|WN|WR|00
+      |WP|WP|WP|WP|WP|WP|WP|WP|10
+      |  |**|  |**|  |**|  |**|20
+      |**|  |**|  |**|  |**|  |30
+      |  |**|  |**|  |**|  |**|40
+      |**|  |**|  |**|  |**|  |50
+      |BP|BP|BP|BP|BP|BP|BP|BP|60
+      |BR|BN|BB|BK|BQ|BB|BN|BR|70
+      -------------------------
+       00 01 02 03 04 05 06 07
+      CC CC CC
+
+  # Enter move: 14 -> 00 (e2 pawn captures a1 rook)
+  - commands: "1400\r"
+    should_continue: true
+    expected_display: |-
+      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
+       00 01 02 03 04 05 06 07
+      -------------------------
+      |WP|WN|WB|WK|WQ|WB|WN|WR|00
+      |WP|WP|WP|WP|**|WP|WP|WP|10
+      |  |**|  |**|  |**|  |**|20
+      |**|  |**|  |**|  |**|  |30
+      |  |**|  |**|  |**|  |**|40
+      |**|  |**|  |**|  |**|  |50
+      |BP|BP|BP|BP|BP|BP|BP|BP|60
+      |BR|BN|BB|BK|BQ|BB|BN|BR|70
+      -------------------------
+       00 01 02 03 04 05 06 07
+      FF 14 00
+
+  - commands: "Q"
+    should_continue: false
+    expected_display: ""

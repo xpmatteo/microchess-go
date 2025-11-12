@@ -1,0 +1,74 @@
+# Test sequence: C -> 2020 -> Enter -> Q
+# This tests moving from an empty square (20) to another empty square (20)
+# Based on observed behavior from: printf 'C2020\rQ' | make play-6502
+#
+# Expected behavior in Phase 4:
+# - FindPieceAtSquare returns NoPiece (0xFF) for square 20
+# - DIS1 shows FF (no piece found)
+# - Carriage return does nothing (no piece to move)
+# - Board remains unchanged
+
+name: "Move from Empty Square"
+description: "Tests attempting to move from empty square 20 (rank 2, file 0)"
+
+steps:
+  - commands: "C"
+    should_continue: true
+    expected_display: |-
+      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
+       00 01 02 03 04 05 06 07
+      -------------------------
+      |WR|WN|WB|WK|WQ|WB|WN|WR|00
+      |WP|WP|WP|WP|WP|WP|WP|WP|10
+      |  |**|  |**|  |**|  |**|20
+      |**|  |**|  |**|  |**|  |30
+      |  |**|  |**|  |**|  |**|40
+      |**|  |**|  |**|  |**|  |50
+      |BP|BP|BP|BP|BP|BP|BP|BP|60
+      |BR|BN|BB|BK|BQ|BB|BN|BR|70
+      -------------------------
+       00 01 02 03 04 05 06 07
+      CC CC CC
+
+  # Enter 4 digits for empty square: 2020
+  # After 4th digit, DIS1 should be FF (no piece found at square 20)
+  - commands: "2020"
+    should_continue: true
+    expected_display: |-
+      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
+       00 01 02 03 04 05 06 07
+      -------------------------
+      |WR|WN|WB|WK|WQ|WB|WN|WR|00
+      |WP|WP|WP|WP|WP|WP|WP|WP|10
+      |  |**|  |**|  |**|  |**|20
+      |**|  |**|  |**|  |**|  |30
+      |  |**|  |**|  |**|  |**|40
+      |**|  |**|  |**|  |**|  |50
+      |BP|BP|BP|BP|BP|BP|BP|BP|60
+      |BR|BN|BB|BK|BQ|BB|BN|BR|70
+      -------------------------
+       00 01 02 03 04 05 06 07
+      FF 20 20
+
+  # Carriage return: no move executed (board unchanged)
+  - commands: "\r"
+    should_continue: true
+    expected_display: |-
+      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
+       00 01 02 03 04 05 06 07
+      -------------------------
+      |WR|WN|WB|WK|WQ|WB|WN|WR|00
+      |WP|WP|WP|WP|WP|WP|WP|WP|10
+      |  |**|  |**|  |**|  |**|20
+      |**|  |**|  |**|  |**|  |30
+      |  |**|  |**|  |**|  |**|40
+      |**|  |**|  |**|  |**|  |50
+      |BP|BP|BP|BP|BP|BP|BP|BP|60
+      |BR|BN|BB|BK|BQ|BB|BN|BR|70
+      -------------------------
+       00 01 02 03 04 05 06 07
+      FF 20 20
+
+  - commands: "Q"
+    should_continue: false
+    expected_display: ""

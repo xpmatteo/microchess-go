@@ -261,8 +261,10 @@ func (g *GameState) HandleCharacter(char byte) bool {
 		// If we have 4 digits entered, execute the move
 		if g.DigitCount == 4 {
 			g.ExecuteMove()
-			g.Display()
 		}
+		// Always display board after carriage return (even if no move executed)
+		// This matches 6502 behavior
+		g.Display()
 		return true
 
 	case '0', '1', '2', '3', '4', '5', '6', '7':
@@ -275,6 +277,14 @@ func (g *GameState) HandleCharacter(char byte) bool {
 		// This matches observed 6502 behavior where DIS1 shows FF during digit entry
 		if g.DigitCount == 0 {
 			g.DIS1 = 0xFF
+		}
+
+		// If we've completed 4 digits previously (DigitCount >= 4),
+		// reset DIS1 to FF but keep the digit rotation going (don't reset DigitCount)
+		// This allows entering 5+ digits - they keep rotating through DIS2/DIS3
+		if g.DigitCount >= 4 {
+			g.DIS1 = 0xFF
+			// Don't reset DigitCount - just let it keep incrementing
 		}
 
 		// Rotate digit into move display (DISMV routine, line 625)

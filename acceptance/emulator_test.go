@@ -159,12 +159,8 @@ func run6502TestCase(t *testing.T, tc testCase) {
 	displays := splitDisplays(output)
 	t.Logf("Found %d displays in 6502 output", len(displays))
 
-	// Deduplicate consecutive displays with same status (6502 may display multiple times)
-	uniqueDisplays := deduplicateDisplays(displays)
-	t.Logf("After deduplication: %d unique displays", len(uniqueDisplays))
-
-	// Debug: log each unique display
-	for i, disp := range uniqueDisplays {
+	// Debug: log each display
+	for i, disp := range displays {
 		normalized := normalizeDisplay(disp)
 		// Extract status code from display
 		lines := strings.Split(normalized, "\n")
@@ -202,16 +198,16 @@ func run6502TestCase(t *testing.T, tc testCase) {
 			displayIdx += numChars - 1
 		}
 
-		if displayIdx >= len(uniqueDisplays) {
+		if displayIdx >= len(displays) {
 			t.Errorf("Step %d (%s): No 6502 display available (expected %d displays, got %d)",
-				i, step.Commands, displayIdx+1, len(uniqueDisplays))
+				i, step.Commands, displayIdx+1, len(displays))
 			continue
 		}
 
 		// Normalize both outputs for comparison
 		// The 6502 version has different formatting (extra separators, ? prompt)
 		expected := normalizeDisplay(step.ExpectedDisplay)
-		actual := normalizeDisplay(uniqueDisplays[displayIdx])
+		actual := normalizeDisplay(displays[displayIdx])
 
 		if expected != actual {
 			t.Errorf("Step %d (%s): Display mismatch\n=== EXPECTED ===\n%s\n=== ACTUAL (6502) ===\n%s\n=== END ===",
@@ -222,29 +218,6 @@ func run6502TestCase(t *testing.T, tc testCase) {
 
 		displayIdx++
 	}
-}
-
-// deduplicateDisplays removes consecutive duplicate displays (same full content)
-func deduplicateDisplays(displays []string) []string {
-	if len(displays) == 0 {
-		return displays
-	}
-
-	var result []string
-	var lastNormalized string
-
-	for _, disp := range displays {
-		// Normalize and compare full display content
-		normalized := normalizeDisplay(disp)
-
-		// Only add if content changed
-		if normalized != lastNormalized {
-			result = append(result, disp)
-			lastNormalized = normalized
-		}
-	}
-
-	return result
 }
 
 // normalizeDisplay normalizes a display for comparison
