@@ -82,7 +82,7 @@ expansion and modifications,
 
 
 
-© This copy of the  MICROCHESS  program   and  documentation  is
+(C) This copy of the  MICROCHESS  program   and  documentation  is
   provided  for the personal use and enjoyment of the purchaser.
   Reproduction  by  any  means  is  prohibited.   Use   of   the
   MICROCHESS  programs,  or any part thereof, for the purpose of
