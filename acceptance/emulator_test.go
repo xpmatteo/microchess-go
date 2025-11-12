@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -86,22 +87,14 @@ func Test6502CommandSequences(t *testing.T) {
 	_, err := os.Stat("../go6502/microchess.bin")
 	require.NoError(t, err)
 
-	// Find all YAML test files
-	files, err := os.ReadDir("testdata")
-	require.NoError(t, err, "Failed to read testdata directory")
-
-	var yamlFiles []string
-	for _, file := range files {
-		if !file.IsDir() && strings.HasSuffix(file.Name(), ".yaml") {
-			yamlFiles = append(yamlFiles, file.Name())
-		}
-	}
-
+	// Find all YAML test files recursively
+	yamlFiles, err := filepath.Glob("testdata/**/*.yaml")
+	require.NoError(t, err, "Failed to glob YAML files")
 	require.NotEmpty(t, yamlFiles, "No YAML test files found in testdata/")
 
 	// Run each test case as a subtest
-	for _, filename := range yamlFiles {
-		tc := loadTestCase(t, filename)
+	for _, filepath := range yamlFiles {
+		tc := loadTestCase(t, filepath)
 		t.Run(tc.Name+" (6502)", func(t *testing.T) {
 			if tc.Skip {
 				t.Skip()

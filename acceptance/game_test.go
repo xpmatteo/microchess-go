@@ -6,6 +6,7 @@ package acceptance
 import (
 	"bytes"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -48,22 +49,14 @@ func TestUnknownCommand(t *testing.T) {
 
 // TestCommandSequences loads and executes all YAML test cases from testdata/
 func TestCommandSequences(t *testing.T) {
-	// Find all YAML files in testdata/
-	files, err := os.ReadDir("testdata")
-	require.NoError(t, err, "Failed to read testdata directory")
-
-	var yamlFiles []string
-	for _, file := range files {
-		if !file.IsDir() && strings.HasSuffix(file.Name(), ".yaml") {
-			yamlFiles = append(yamlFiles, file.Name())
-		}
-	}
-
+	// Find all YAML files recursively in testdata/
+	yamlFiles, err := filepath.Glob("testdata/**/*.yaml")
+	require.NoError(t, err, "Failed to glob YAML files")
 	require.NotEmpty(t, yamlFiles, "No YAML test files found in testdata/")
 
 	// Run each test case as a subtest
-	for _, filename := range yamlFiles {
-		tc := loadTestCase(t, filename)
+	for _, filepath := range yamlFiles {
+		tc := loadTestCase(t, filepath)
 		t.Run(tc.Name, func(t *testing.T) {
 			if tc.Skip {
 				t.Skip()
@@ -75,13 +68,13 @@ func TestCommandSequences(t *testing.T) {
 }
 
 // loadTestCase loads a test case from a YAML file
-func loadTestCase(t *testing.T, filename string) testCase {
-	data, err := os.ReadFile("testdata/" + filename)
-	require.NoError(t, err, "Failed to read test data file: %s", filename)
+func loadTestCase(t *testing.T, filepath string) testCase {
+	data, err := os.ReadFile(filepath)
+	require.NoError(t, err, "Failed to read test data file: %s", filepath)
 
 	var tc testCase
 	err = yaml.Unmarshal(data, &tc)
-	require.NoError(t, err, "Failed to parse YAML test data: %s", filename)
+	require.NoError(t, err, "Failed to parse YAML test data: %s", filepath)
 
 	return tc
 }
