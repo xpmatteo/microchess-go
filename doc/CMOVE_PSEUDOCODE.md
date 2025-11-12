@@ -13,8 +13,8 @@ CMOVE (Calculate Move) is the core move validation routine in MicroChess. It cal
 | `SQUARE` | `$B1` | Current/target square being evaluated | Read to get starting position, then updated with new position after adding move offset |
 | `MOVEN` | `$B6` | Current move offset index into MOVEX table | Used to index into MOVEX to get direction offset |
 | `MOVEX` | `$1589` | Direction offset table (17 bytes) | Read to get offset for current move direction |
-| `BOARD` | `$50-$5F` | Piece locations for white (16 bytes) | Scanned to check if target square is occupied and by which side |
-| `BK` | `$60-$6F` | Piece locations for black (16 bytes) | Scanned along with BOARD (as continuous 32-byte array) to find occupying piece |
+| `BOARD` | `$50-$5F` | Piece locations for white (16 bytes) | Scanned as part of continuous 32-byte array [BOARD+BK] to check if target square is occupied |
+| `BK` | `$60-$6F` | Piece locations for black (16 bytes) | Scanned via BOARD,X indexing when X≥16 (memory layout: BOARD immediately followed by BK) |
 | `STATE` | `$B5` | Analysis state machine value | Checked to determine if CHKCHK (check verification) should run |
 | `INCHEK` | `$B4` | Check detection flag ($FF = safe, $00 = king capturable) | Set to $F9 before check detection, read after GNM to determine if king is safe |
 | `PIECE` | `$B0` | Current piece index being moved (0-15) | Used by MOVE/UMOVE during CHKCHK |
@@ -30,10 +30,10 @@ CMOVE (Calculate Move) is the core move validation routine in MicroChess. It cal
 ## Subroutines Called
 
 When CHKCHK is triggered (STATE between 0-7):
-- `MOVE()` - Make the trial move
+- `MOVE()` - Make the trial move (uses dual-stack SP1/SP2 mechanism)
 - `REVERSE()` - Switch board perspective to opponent's side
 - `GNM()` - Generate all moves for opponent
-- `RUM()` - Reverse board and unmake move (calls REVERSE then UMOVE)
+- `RUM()` - Reverse board and unmake move (calls REVERSE, then **falls through** to UMOVE - no explicit JSR)
 
 ## Pseudocode
 
@@ -56,6 +56,10 @@ function CMOVE():
         goto ILLEGAL
 
     // Scan all 32 pieces to see if target square is occupied
+    // Note: BOARD and BK form a continuous 32-byte array in memory ($50-$6F)
+    // The assembly uses BOARD,X with X from 31 down to 0:
+    //   X=0-15  accesses BOARD[0-15] at $50-$5F (your pieces)
+    //   X=16-31 accesses BK[0-15] at $60-$6F (opponent pieces)
     for pieceIndex from 31 down to 0:
         if BOARD[pieceIndex] == newSquare:
             // Square is occupied!
@@ -65,10 +69,12 @@ function CMOVE():
                 goto ILLEGAL  // Blocked by own piece
 
             // Must be opponent's piece (indices 16-31)
-            // Set V flag to indicate capture
-            A = 0x7F
-            A = A + 1     // 0x7F + 1 = 0x80, sets V flag
-            if V_FLAG:    // Always true here
+            // Set V flag to indicate capture using signed overflow trick
+            A = 0x7F      // Load +127 (maximum positive signed byte)
+            A = A + 1     // 0x7F + 1 = 0x80 = -128 in two's complement
+                          // This causes signed overflow: +127 → -128
+                          // The V flag is set when sign changes unexpectedly
+            if V_FLAG:    // Always true here (overflow occurred)
                 goto SPX  // Jump to check-check logic
 
     // No piece on target square
@@ -84,26 +90,30 @@ SPX:
 
     // Do the expensive CHKCHK verification
 CHKCHK:
-    // Save current state
+    // Save current state (order matters: A first, then flags)
     PUSH(A)
     PUSH(ProcessorStatus)
 
     savedState = STATE
     STATE = 0xF9  // -7: Check detection mode
-    INCHEK = 0xF9  // Assume king is safe
+    INCHEK = 0xF9  // Assume king is safe (will only change to $00 if king capturable)
 
-    // Make the trial move
+    // Make the trial move using dual-stack mechanism
+    // MOVE() switches to game state stack (SP2) to save move, then back to call stack (SP1)
+    // This allows the move to be unmade later without corrupting the call stack
     MOVE()
 
     // Switch sides and generate all opponent replies
     REVERSE()
     GNM()  // Generate all moves for opponent
+           // If any move can capture BK[0] (king), JANUS sets INCHEK=$00
 
-    // Restore board (REVERSE and UMOVE)
+    // Restore board: REVERSE() then fall through to UMOVE()
+    // RUM() reverses the board and unmakes the move using the game state stack (SP2)
     RUM()
 
-    // Restore saved state
-    POP(ProcessorStatus)
+    // Restore saved state (order matters: flags first, then A)
+    POP(ProcessorStatus)  // Restores calling context's flag state
     POP(A)
     STATE = savedState
 
@@ -125,9 +135,11 @@ RETL:
 
 ILLEGAL:
     // Illegal move (off board or blocked by own piece)
-    A = 0xFF
-    CLC  // Clear carry (different from check)
-    CLV  // Clear overflow (no capture)
+    A = 0xFF      // $FF is negative in two's complement (-1)
+                  // Loading $FF automatically sets the N (Negative) flag
+                  // This is how BMI (Branch if Minus) detects illegal moves
+    CLC           // Clear carry (C flag clear = not in check, just illegal)
+    CLV           // Clear overflow (V flag clear = no capture possible)
     return
 ```
 
@@ -148,6 +160,24 @@ CMOVE uses the 6502 processor status flags to encode multiple return states:
 - `BVS` (Branch if oVerflow Set) - checks if capture
 - `BCC` (Branch if Carry Clear) - checks if not in check
 - `BCS` (Branch if Carry Set) - checks if in check
+
+## Memory Layout
+
+CMOVE relies on a specific memory layout where piece arrays are contiguous:
+
+```
+Address Range | Variable    | Contents
+--------------|-------------|------------------------------------------
+$50-$57       | BOARD[0-7]  | Your pieces: King, Queen, Rooks, Bishops
+$58-$5F       | BOARD[8-15] | Your pieces: Knights, Pawns
+$60-$67       | BK[0-7]     | Opponent pieces: King, Queen, Rooks, Bishops
+$68-$6F       | BK[8-15]    | Opponent pieces: Knights, Pawns
+
+Key insight: When assembly uses "LDA BOARD,X" with X=16-31, it actually
+accesses BK[0-15] because BK immediately follows BOARD in memory.
+```
+
+This continuous layout enables efficient scanning with a single loop from index 31 down to 0.
 
 ## Key Algorithmic Points
 
@@ -199,6 +229,27 @@ RETJ    RTS
 
 If any generated move has `SQUARE == BK[0]`, then `INCHEK` is set to $00, indicating the king can be captured.
 
+**INCHEK initial state**: Set to $F9 before GNM runs. This value means "not yet modified = king is safe". Only if GNM finds a king capture does JANUS change it to $00. This is more efficient than initializing to "unsafe" and proving safety.
+
+## Performance Characteristics
+
+CMOVE's performance varies dramatically based on whether CHKCHK runs:
+
+**Without CHKCHK** (STATE < 0 or STATE ≥ 8):
+- ~40-60 cycles for off-board detection
+- ~50-80 cycles for collision detection
+- Total: **40-80 cycles** depending on piece scan length
+
+**With CHKCHK** (STATE = 0-7):
+- Base CMOVE: ~40-80 cycles
+- MOVE: ~50 cycles (stack switching + board update)
+- REVERSE: ~320 cycles (16 pieces × 2 transformations)
+- GNM: **~2,000-10,000 cycles** (generates all opponent moves)
+- RUM: ~370 cycles (REVERSE + UMOVE)
+- Total: **~2,500-11,000 cycles**
+
+**Critical insight**: CHKCHK is 30-140× slower than basic CMOVE. The STATE machine carefully controls when this expensive verification runs, making it a key optimization for 1 MHz CPU performance.
+
 ## Historical Context
 
 CMOVE demonstrates several 6502 assembly idioms common in 1976:
@@ -216,10 +267,15 @@ The routine is remarkably compact (~60 bytes) yet handles:
 
 This exemplifies the code density required for 1976 hardware constraints (~1KB total program space).
 
-## Usage Example
+## Common Calling Patterns
+
+CMOVE is called by three main movement routines, each handling different piece types:
+
+### 1. SNGMV - Single-step moves (King, Knight)
 
 ```assembly
-; Generate knight moves
+; Used for pieces that move one step at a time in 8 or 16 directions
+; Example: Generate knight moves (lines 325-331)
 KNIGHT  LDX     #$10
         STX     MOVEN           ; Start at move offset 16
 AGNN    JSR     SNGMV           ; SNGMV calls CMOVE
@@ -227,14 +283,58 @@ AGNN    JSR     SNGMV           ; SNGMV calls CMOVE
         CMP     #$08
         BNE     AGNN            ; Continue until offset 8
 
-; SNGMV (line 357):
+; SNGMV routine (line 357):
 SNGMV   JSR     CMOVE           ; Calculate move
-        BMI     ILL1            ; If illegal (N flag), skip
+        BMI     ILL1            ; If illegal (N flag set), skip
         JSR     JANUS           ; Evaluate legal move
 ILL1    JSR     RESET           ; Restore piece position
         DEC     MOVEN
         RTS
 ```
+
+### 2. LINE - Sliding moves (Queen, Rook, Bishop)
+
+```assembly
+; Used for pieces that slide along lines until blocked or capture
+; Example: Rook moves (lines 313-317)
+ROOK    LDX     #$04
+        STX     MOVEN           ; Moves 4 to 1 (cardinal directions)
+AGNR    JSR     LINE            ; LINE calls CMOVE repeatedly
+        BNE     AGNR
+
+; LINE routine (line 367):
+LINE    JSR     CMOVE           ; Calculate move
+        BCC     OVL             ; If check flag clear, continue
+        BVC     LINE            ; If no capture, continue sliding
+OVL     BMI     ILL             ; If illegal, stop this direction
+        PHP
+        JSR     JANUS           ; Evaluate legal move
+        PLP
+        BVC     LINE            ; If no capture, keep sliding
+ILL     JSR     RESET           ; Restore piece, direction exhausted
+        DEC     MOVEN
+        RTS
+```
+
+### 3. CMOVE direct calls - Pawn moves
+
+```assembly
+; Pawns have special logic (lines 333-352)
+PAWN    LDX     #$06
+        STX     MOVEN
+P1      JSR     CMOVE           ; Right capture diagonal
+        BVC     P2              ; If no capture (V flag clear), skip
+        BMI     P2              ; If illegal (N flag set), skip
+        JSR     JANUS           ; Evaluate capture
+P2      JSR     RESET
+        DEC     MOVEN
+        ; ... continues for left capture and forward move
+```
+
+**Key pattern differences**:
+- **SNGMV**: Single CMOVE call per direction, always evaluates result
+- **LINE**: Repeated CMOVE calls until illegal/capture, uses BVC to check capture flag
+- **Pawn**: Direct CMOVE calls with custom logic for captures vs. advances
 
 ## Go Port Considerations
 
