@@ -68,6 +68,12 @@ type GameState struct {
 	// Used to know when we have a complete move (4 digits)
 	DigitCount uint8
 
+	// Move generation state (used by GNM)
+	// Assembly: $B0, $B1, $B6
+	MovePiece  Piece        // Current piece being processed by GNM (assembly: PIECE at $B0)
+	MoveSquare board.Square // Working square for move calculation (assembly: SQUARE at $B1)
+	MoveN      uint8        // Move direction index into MOVEX (assembly: MOVEN at $B6)
+
 	// I/O for display and input
 	out io.Writer
 }
@@ -291,6 +297,12 @@ func (g *GameState) HandleCharacter(char byte) bool {
 		// Print board (POUT routine, line 702, called at line 140)
 		_, _ = fmt.Fprintln(g.out, "\r") // Clean newline after echoed 'P'
 		g.Display()
+		return true
+
+	case 'L':
+		// List legal moves (NEW command - not in original)
+		_, _ = fmt.Fprintln(g.out, "\r") // Clean newline after echoed 'L'
+		g.ListLegalMoves()
 		return true
 
 	case '\r', '\n':

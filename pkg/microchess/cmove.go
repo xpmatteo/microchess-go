@@ -47,22 +47,26 @@ func (r CMoveResult) isCapture() bool {
 //  5. If collision with opponent (index >= 16): set V flag (capture)
 //  6. Return result (CHKCHK skipped for now)
 func (g *GameState) CMOVE(from board.Square, moven uint8) CMoveResult {
-	// Step 1: Calculate new from position
-	// Assembly line 407-408: LDA SQUARE / CLC / ADC MOVEX,X / STA SQUARE
+	// Step 1: Calculate new position
+	// Assembly line 407-411: LDA SQUARE / CLC / ADC MOVEX,X / STA SQUARE
 	newSquare := int16(from) + int16(MOVEX[moven])
 
 	// Step 2: Check if off board using 0x88 trick
-	// Assembly line 410-411: AND #$88 / BNE ILLEGAL
-	// Any off-board from has bit $08 or $80 set
+	// Assembly line 412-413: AND #$88 / BNE ILLEGAL
+	// Any off-board square has bit $08 or $80 set
 	if (newSquare & 0x88) != 0 {
 		// ILLEGAL: off board
-		// Assembly line 461-464
+		// Assembly line 466-469
 		return CMoveResult{
 			Illegal: true,  // Negative flag set (illegal)
 			Capture: false, // No capture
 			InCheck: false, // No check
 		}
 	}
+
+	// CRITICAL: Update MoveSquare with new position
+	// This matches assembly line 411: STA SQUARE
+	g.MoveSquare = board.Square(newSquare)
 
 	// Step 3: Scan all 32 pieces to check for collision
 	// Assembly line 413-421: Loop X from $1F down to $00
@@ -85,9 +89,9 @@ func (g *GameState) CMOVE(from board.Square, moven uint8) CMoveResult {
 			pieceSquare = g.BK[pieceIndex-16]
 		}
 
-		// Check if this piece occupies the target from
-		// Assembly line 414: CMP BOARD,X
-		if pieceSquare == board.Square(newSquare) {
+		// Check if this piece occupies the target square
+		// Assembly line 419: CMP BOARD,X
+		if pieceSquare == g.MoveSquare {
 			// Square is occupied!
 
 			// Assembly line 415-416: CPX #$10 / BCC ILLEGAL

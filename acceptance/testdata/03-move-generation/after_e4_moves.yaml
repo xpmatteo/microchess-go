@@ -1,7 +1,6 @@
 name: "Legal Moves After 1.e4"
 description: "After e2-e4, bishop and queen diagonals open up"
 skip_6502: true  # L command doesn't exist in original
-skip: true
 steps:
   - command: "C"
     should_continue: true
