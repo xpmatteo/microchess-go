@@ -72,6 +72,45 @@ type GameState struct {
 	out io.Writer
 }
 
+// MOVEX is the direction offset table used for move generation and validation.
+// This matches the MOVEX table from assembly (line 875-876).
+//
+// Each entry represents a directional offset to add to a square in 0x88 format:
+//
+//	Index 0: $00 (null move - unused)
+//	Index 1: $F0 (-16 decimal, one rank down)
+//	Index 2: $FF (-1 horizontal in 0x88, one file left)
+//	Index 3: $01 (+1 horizontal, one file right)
+//	Index 4: $10 (+16 decimal, one rank up)
+//	Index 5-8: Diagonal moves (±1 rank, ±1 file)
+//	Index 9-16: Knight moves (±2 ranks/±1 file and ±1 rank/±2 files)
+//
+// These offsets work with 0x88 board representation where:
+//   - Ranks are in bits 4-6 (0x00, 0x10, 0x20, ..., 0x70)
+//   - Files are in bits 0-2 (0x00-0x07)
+//   - Adding $10 moves up one rank, $01 moves right one file
+//
+// Assembly reference: line 875-876
+var MOVEX = [17]int8{
+	0x00,  // 0: null
+	-0x10, // 1: down ($F0 in unsigned byte)
+	-0x01, // 2: left ($FF in unsigned byte)
+	0x01,  // 3: right
+	0x10,  // 4: up
+	0x11,  // 5: up-right
+	0x0F,  // 6: up-left
+	-0x11, // 7: down-left ($EF in unsigned byte)
+	-0x0F, // 8: down-right ($F1 in unsigned byte)
+	-0x21, // 9: knight down-down-left ($DF in unsigned byte)
+	-0x1F, // 10: knight down-down-right ($E1 in unsigned byte)
+	-0x12, // 11: knight down-left-left ($EE in unsigned byte)
+	-0x0E, // 12: knight down-right-right ($F2 in unsigned byte)
+	0x12,  // 13: knight up-left-left
+	0x0E,  // 14: knight up-right-right
+	0x1F,  // 15: knight up-up-left
+	0x21,  // 16: knight up-up-right
+}
+
 // InitialSetup contains the starting positions for all pieces.
 // This matches the SETW/SETB tables from the assembly (lines 672-687).
 //
