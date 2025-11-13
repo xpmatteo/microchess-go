@@ -6,25 +6,7 @@ description: "Tests double reverse returning board to original orientation"
 final_reversed: false  # After double E, board should be back to normal
 
 steps:
-  - commands: "C"
-    should_continue: true
-    expected_display: |-
-      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
-       00 01 02 03 04 05 06 07
-      -------------------------
-      |WR|WN|WB|WK|WQ|WB|WN|WR|00
-      |WP|WP|WP|WP|WP|WP|WP|WP|10
-      |  |**|  |**|  |**|  |**|20
-      |**|  |**|  |**|  |**|  |30
-      |  |**|  |**|  |**|  |**|40
-      |**|  |**|  |**|  |**|  |50
-      |BP|BP|BP|BP|BP|BP|BP|BP|60
-      |BR|BN|BB|BK|BQ|BB|BN|BR|70
-      -------------------------
-       00 01 02 03 04 05 06 07
-      CC CC CC
-
-  - commands: "E"
+  - commands: "CE"
     should_continue: true
     expected_display: |-
       MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
