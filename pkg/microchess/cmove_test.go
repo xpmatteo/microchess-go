@@ -128,11 +128,11 @@ func TestCMOVE_OffBoardDetection(t *testing.T) {
 			assert.False(t, result.isLegal(),
 				"Move from $%02X with MOVEN=%d should be illegal (off board): %s",
 				tt.startSquare, tt.moven, tt.description)
-			assert.True(t, result.N,
+			assert.True(t, result.Illegal,
 				"N flag should be set for off-board move")
-			assert.False(t, result.V,
+			assert.False(t, result.Capture,
 				"V flag should be clear (no capture)")
-			assert.False(t, result.C,
+			assert.False(t, result.InCheck,
 				"C flag should be clear (no check detection)")
 		})
 	}
@@ -191,9 +191,9 @@ func TestCMOVE_EmptySquare(t *testing.T) {
 			assert.True(t, result.isLegal(),
 				"Move from $%02X with MOVEN=%d to $%02X should be legal (empty square)",
 				tt.startSquare, tt.moven, tt.expectSquare)
-			assert.False(t, result.N, "N flag should be clear (legal)")
-			assert.False(t, result.V, "V flag should be clear (no capture)")
-			assert.False(t, result.C, "C flag should be clear (no check)")
+			assert.False(t, result.Illegal, "N flag should be clear (legal)")
+			assert.False(t, result.Capture, "V flag should be clear (no capture)")
+			assert.False(t, result.InCheck, "C flag should be clear (no check)")
 		})
 	}
 }
@@ -251,9 +251,9 @@ func TestCMOVE_OwnPieceCollision(t *testing.T) {
 			assert.False(t, result.isLegal(),
 				"Move from $%02X with MOVEN=%d should be illegal (blocked by own piece at $%02X)",
 				tt.startSquare, tt.moven, tt.blockingSquare)
-			assert.True(t, result.N, "N flag should be set (illegal)")
-			assert.False(t, result.V, "V flag should be clear (own piece, not capture)")
-			assert.False(t, result.C, "C flag should be clear (no check)")
+			assert.True(t, result.Illegal, "N flag should be set (illegal)")
+			assert.False(t, result.Capture, "V flag should be clear (own piece, not capture)")
+			assert.False(t, result.InCheck, "C flag should be clear (no check)")
 		})
 	}
 }
@@ -318,9 +318,9 @@ func TestCMOVE_OpponentPieceCollision(t *testing.T) {
 			assert.True(t, result.isLegal(),
 				"Move from $%02X with MOVEN=%d should be legal (can capture opponent at $%02X)",
 				tt.startSquare, tt.moven, tt.opponentSquare)
-			assert.False(t, result.N, "N flag should be clear (legal)")
-			assert.True(t, result.V, "V flag should be set (capture)")
-			assert.False(t, result.C, "C flag should be clear (no check)")
+			assert.False(t, result.Illegal, "N flag should be clear (legal)")
+			assert.True(t, result.Capture, "V flag should be set (capture)")
+			assert.False(t, result.InCheck, "C flag should be clear (no check)")
 			assert.True(t, result.isCapture(), "isCapture() should return true")
 		})
 	}

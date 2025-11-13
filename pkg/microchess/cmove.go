@@ -10,19 +10,19 @@ import (
 // CMoveResult represents the processor flags returned by CMOVE.
 // These flags mirror the 6502 processor status register flags used in the assembly.
 type CMoveResult struct {
-	N bool // Negative flag: true if move is illegal (off board or blocked by own piece)
-	V bool // oVerflow flag: true if capture possible (opponent piece on target)
-	C bool // Carry flag: true if move leaves king in check
+	Illegal bool // Negative flag: true if move is illegal (off board or blocked by own piece)
+	Capture bool // oVerflow flag: true if capture possible (opponent piece on target)
+	InCheck bool // Carry flag: true if move leaves king in check
 }
 
-// isLegal returns true if the move is legal (N=false and C=false)
+// isLegal returns true if the move is legal (Illegal=false and InCheck=false)
 func (r CMoveResult) isLegal() bool {
-	return !r.N && !r.C
+	return !r.Illegal && !r.InCheck
 }
 
-// isCapture returns true if the move captures an opponent piece (V=true)
+// isCapture returns true if the move captures an opponent piece (Capture=true)
 func (r CMoveResult) isCapture() bool {
-	return r.V
+	return r.Capture
 }
 
 // CMOVE calculates whether a move is legal, results in capture, or leaves own king in check
@@ -35,9 +35,9 @@ func (r CMoveResult) isCapture() bool {
 //   - moven: Index into MOVEX table (0-16) indicating move direction
 //
 // Returns CMoveResult with flags:
-//   - N (Negative): true if move is illegal (off board or blocked by own piece)
-//   - V (oVerflow): true if capture possible (opponent piece on target)
-//   - C (Carry): false (always - CHKCHK not implemented yet)
+//   - Illegal: true if move is illegal (off board or blocked by own piece)
+//   - Capture: true if capture possible (opponent piece on target)
+//   - InCheck: false (always - CHKCHK not implemented yet)
 //
 // Algorithm (from CMOVE_PSEUDOCODE.md lines 76-110):
 //  1. Calculate newSquare = square + MOVEX[moven]
@@ -58,9 +58,9 @@ func (g *GameState) CMOVE(from board.Square, moven uint8) CMoveResult {
 		// ILLEGAL: off board
 		// Assembly line 461-464
 		return CMoveResult{
-			N: true,  // Negative flag set (illegal)
-			V: false, // No capture
-			C: false, // No check
+			Illegal: true,  // Negative flag set (illegal)
+			Capture: false, // No capture
+			InCheck: false, // No check
 		}
 	}
 
@@ -94,9 +94,9 @@ func (g *GameState) CMOVE(from board.Square, moven uint8) CMoveResult {
 			if pieceIndex < 16 {
 				// Blocked by own piece
 				return CMoveResult{
-					N: true,  // Negative flag set (illegal)
-					V: false, // No capture
-					C: false, // No check
+					Illegal: true,  // Illegal
+					Capture: false, // No capture
+					InCheck: false, // No check
 				}
 			}
 
@@ -116,8 +116,8 @@ func (g *GameState) CMOVE(from board.Square, moven uint8) CMoveResult {
 
 	// Assembly line 459 (RETL): Legal move
 	return CMoveResult{
-		N: false,       // Not illegal
-		V: captureFlag, // Capture if opponent piece found
-		C: false,       // No check (CHKCHK not implemented)
+		Illegal: false,       // Not illegal
+		Capture: captureFlag, // Capture if opponent piece found
+		InCheck: false,       // No check (CHKCHK not implemented)
 	}
 }

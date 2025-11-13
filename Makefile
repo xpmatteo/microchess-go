@@ -1,11 +1,12 @@
 
 .PHONY: run test lint fmt tidy play-6502
 
-run:
-	go run ./cmd/microchess
 
 test:
 	go test ./...
+
+run:
+	go run ./cmd/microchess
 
 lint:
 	golangci-lint run ./...
