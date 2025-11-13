@@ -122,7 +122,7 @@ func TestCMOVE_OffBoardDetection(t *testing.T) {
 			// Place a piece at the starting square
 			game.Board[PieceKing] = tt.startSquare
 
-			result := game.CMOVE(PieceKing, tt.startSquare, tt.moven)
+			result := game.CMOVE(tt.startSquare, tt.moven)
 
 			// Verify move is illegal (N flag set)
 			assert.False(t, result.isLegal(),
@@ -185,7 +185,7 @@ func TestCMOVE_EmptySquare(t *testing.T) {
 			// Place a piece at the starting square
 			game.Board[PieceKing] = tt.startSquare
 
-			result := game.CMOVE(PieceKing, tt.startSquare, tt.moven)
+			result := game.CMOVE(tt.startSquare, tt.moven)
 
 			// Verify move is legal with no capture
 			assert.True(t, result.isLegal(),
@@ -245,7 +245,7 @@ func TestCMOVE_OwnPieceCollision(t *testing.T) {
 			// Place own blocking piece
 			game.Board[tt.blockingPiece] = tt.blockingSquare
 
-			result := game.CMOVE(PieceKing, tt.startSquare, tt.moven)
+			result := game.CMOVE(tt.startSquare, tt.moven)
 
 			// Verify move is illegal with no capture flag
 			assert.False(t, result.isLegal(),
@@ -312,7 +312,7 @@ func TestCMOVE_OpponentPieceCollision(t *testing.T) {
 			// Place opponent piece
 			game.BK[tt.opponentPiece] = tt.opponentSquare
 
-			result := game.CMOVE(PieceKing, tt.startSquare, tt.moven)
+			result := game.CMOVE(tt.startSquare, tt.moven)
 
 			// Verify move is legal with capture flag set
 			assert.True(t, result.isLegal(),

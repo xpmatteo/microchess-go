@@ -25,14 +25,13 @@ func (r CMoveResult) isCapture() bool {
 	return r.V
 }
 
-// CMOVE calculates whether a move is legal and sets processor-style flags.
+// CMOVE calculates whether a move is legal, results in capture, or leaves own king in check
 // This implements the core CMOVE routine from assembly lines 407-469, excluding CHKCHK.
 //
 // Assembly reference: Lines 407-469 in Microchess6502.txt
 //
 // Parameters:
-//   - piece: The piece being moved (0-15) - used for context, not validation
-//   - square: Starting square in 0x88 format
+//   - from: Starting square in 0x88 format
 //   - moven: Index into MOVEX table (0-16) indicating move direction
 //
 // Returns CMoveResult with flags:
@@ -47,14 +46,14 @@ func (r CMoveResult) isCapture() bool {
 //  4. If collision with own piece (index < 16): return ILLEGAL
 //  5. If collision with opponent (index >= 16): set V flag (capture)
 //  6. Return result (CHKCHK skipped for now)
-func (g *GameState) CMOVE(piece Piece, square board.Square, moven uint8) CMoveResult {
-	// Step 1: Calculate new square position
+func (g *GameState) CMOVE(from board.Square, moven uint8) CMoveResult {
+	// Step 1: Calculate new from position
 	// Assembly line 407-408: LDA SQUARE / CLC / ADC MOVEX,X / STA SQUARE
-	newSquare := int16(square) + int16(MOVEX[moven])
+	newSquare := int16(from) + int16(MOVEX[moven])
 
 	// Step 2: Check if off board using 0x88 trick
 	// Assembly line 410-411: AND #$88 / BNE ILLEGAL
-	// Any off-board square has bit $08 or $80 set
+	// Any off-board from has bit $08 or $80 set
 	if (newSquare & 0x88) != 0 {
 		// ILLEGAL: off board
 		// Assembly line 461-464
@@ -86,7 +85,7 @@ func (g *GameState) CMOVE(piece Piece, square board.Square, moven uint8) CMoveRe
 			pieceSquare = g.BK[pieceIndex-16]
 		}
 
-		// Check if this piece occupies the target square
+		// Check if this piece occupies the target from
 		// Assembly line 414: CMP BOARD,X
 		if pieceSquare == board.Square(newSquare) {
 			// Square is occupied!
