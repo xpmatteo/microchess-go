@@ -6,6 +6,17 @@ CMOVE (Calculate Move) is the core move validation routine in MicroChess. It cal
 
 **Assembly Location**: Lines 407-469 in Microchess6502.txt
 
+CMOVE is NOT used to validate user moves. When you enter a move via the UI:
+
+1. INPUT routine (lines 262-273): Reads your 4 digits, finds which piece is at the FROM square
+2. Enter key pressed (line 146-149): Directly calls MOVE() - no CMOVE validation
+3. MOVE routine (lines 511-539): Blindly executes whatever move you entered
+
+CMOVE has exactly two purposes, both for the AI only:
+
+1. AI Move Generation (lines 286-352 → CMOVE): When the computer generates its moves, CMOVE filters out illegal moves (off board, blocked by own pieces)
+2. Check Detection (lines 444-460 CHKCHK): When evaluating AI moves, CMOVE verifies they don't leave the king in check by making a trial move and seeing if opponent could capture the king
+
 ## Critical: Current Player Perspective
 
 **CMOVE always analyzes moves from the current player's perspective.** It validates whether the current player can legally make a specific move.
