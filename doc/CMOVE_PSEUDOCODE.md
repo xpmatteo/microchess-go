@@ -6,6 +6,22 @@ CMOVE (Calculate Move) is the core move validation routine in MicroChess. It cal
 
 **Assembly Location**: Lines 407-469 in Microchess6502.txt
 
+## Critical: Current Player Perspective
+
+**CMOVE always analyzes moves from the current player's perspective.** It validates whether the current player can legally make a specific move.
+
+The routine has no concept of "white" or "black" or "AI" vs "human". Instead:
+- `BOARD[0-15]` always contains the **current player's pieces** (the side making the move)
+- `BK[0-15]` always contains the **opponent's pieces** (the side responding to the move)
+
+When the game switches turns, `REVERSE()` is called to:
+1. Swap `BOARD` ↔ `BK` (current player becomes opponent, vice versa)
+2. Transform all coordinates (`newSquare = $77 - oldSquare`)
+
+This ensures CMOVE always sees the board from the current player's viewpoint, regardless of which color or player (AI/human) is actually moving.
+
+**Example**: When checking if a white move is legal, CMOVE sees white pieces in `BOARD[0-15]`. After `REVERSE()`, when checking black's responses, CMOVE sees black pieces in `BOARD[0-15]`. The routine's logic remains identical.
+
 ## Global Variables Read
 
 | Variable | Address | Description | Usage in CMOVE |
@@ -13,8 +29,8 @@ CMOVE (Calculate Move) is the core move validation routine in MicroChess. It cal
 | `SQUARE` | `$B1` | Current/target square being evaluated | Read to get starting position, then updated with new position after adding move offset |
 | `MOVEN` | `$B6` | Current move offset index into MOVEX table | Used to index into MOVEX to get direction offset |
 | `MOVEX` | `$1589` | Direction offset table (17 bytes) | Read to get offset for current move direction |
-| `BOARD` | `$50-$5F` | Piece locations for white (16 bytes) | Scanned as part of continuous 32-byte array [BOARD+BK] to check if target square is occupied |
-| `BK` | `$60-$6F` | Piece locations for black (16 bytes) | Scanned via BOARD,X indexing when X≥16 (memory layout: BOARD immediately followed by BK) |
+| `BOARD` | `$50-$5F` | Current player's piece locations (16 bytes) | Scanned as part of continuous 32-byte array [BOARD+BK] to check if target square is occupied |
+| `BK` | `$60-$6F` | Opponent's piece locations (16 bytes) | Scanned via BOARD,X indexing when X≥16 (memory layout: BOARD immediately followed by BK) |
 | `STATE` | `$B5` | Analysis state machine value | Checked to determine if CHKCHK (check verification) should run |
 | `INCHEK` | `$B4` | Check detection flag ($FF = safe, $00 = king capturable) | Set to $F9 before check detection, read after GNM to determine if king is safe |
 | `PIECE` | `$B0` | Current piece index being moved (0-15) | Used by MOVE/UMOVE during CHKCHK |
@@ -168,13 +184,16 @@ CMOVE relies on a specific memory layout where piece arrays are contiguous:
 ```
 Address Range | Variable    | Contents
 --------------|-------------|------------------------------------------
-$50-$57       | BOARD[0-7]  | Your pieces: King, Queen, Rooks, Bishops
-$58-$5F       | BOARD[8-15] | Your pieces: Knights, Pawns
-$60-$67       | BK[0-7]     | Opponent pieces: King, Queen, Rooks, Bishops
-$68-$6F       | BK[8-15]    | Opponent pieces: Knights, Pawns
+$50-$57       | BOARD[0-7]  | Current player's pieces: King, Queen, Rooks, Bishops
+$58-$5F       | BOARD[8-15] | Current player's pieces: Knights, Pawns
+$60-$67       | BK[0-7]     | Opponent's pieces: King, Queen, Rooks, Bishops
+$68-$6F       | BK[8-15]    | Opponent's pieces: Knights, Pawns
 
 Key insight: When assembly uses "LDA BOARD,X" with X=16-31, it actually
 accesses BK[0-15] because BK immediately follows BOARD in memory.
+
+"Current player" and "opponent" are perspective-dependent. After REVERSE()
+is called, the arrays swap roles (current player becomes opponent and vice versa).
 ```
 
 This continuous layout enables efficient scanning with a single loop from index 31 down to 0.
