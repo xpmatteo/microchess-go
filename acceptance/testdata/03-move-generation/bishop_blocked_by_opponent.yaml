@@ -1,0 +1,56 @@
+name: "Bishop Blocked by Opponent Piece"
+description: "After e2-e4 and black d7-d3, bishop f1 can reach d3 (capture) but not beyond"
+skip_6502: true  # L command doesn't exist in original
+steps:
+  - commands: "C1434\r6323\r"
+    should_continue: true
+    expected_display: |-
+      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
+       00 01 02 03 04 05 06 07
+      -------------------------
+      |WR|WN|WB|WK|WQ|WB|WN|WR|00
+      |WP|WP|WP|WP|**|WP|WP|WP|10
+      |  |**|  |BP|  |**|  |**|20
+      |**|  |**|  |WP|  |**|  |30
+      |  |**|  |**|  |**|  |**|40
+      |**|  |**|  |**|  |**|  |50
+      |BP|BP|BP|**|BP|BP|BP|BP|60
+      |BR|BN|BB|BK|BQ|BB|BN|BR|70
+      -------------------------
+       00 01 02 03 04 05 06 07
+      FF 63 23
+
+  - commands: "L"
+    should_continue: true
+    expected_display: |-
+      # After e2-e4 and black d7-d3
+      # Pawn moves (d-file pawn at 13 cannot move - blocked by black pawn at 23)
+      - 34 44
+      - 15 25
+      - 15 35
+      - 12 23
+      - 12 22
+      - 12 32
+      - 16 26
+      - 16 36
+      - 11 21
+      - 11 31
+      - 17 27
+      - 17 37
+      - 10 20
+      - 10 30
+      # Knights
+      - 06 27
+      - 06 25
+      - 06 14
+      - 01 22
+      - 01 20
+      # Bishop f1 (piece 5) - can reach e2 and capture d3, but BLOCKED beyond d3
+      - 05 14
+      - 05 23
+      # Bishop c1 (piece 4)
+      - 04 14
+      - 04 24
+      # Queen (piece 1)
+      - 03 14
+  - commands: "Q"

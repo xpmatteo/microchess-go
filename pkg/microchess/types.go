@@ -402,12 +402,24 @@ func (g *GameState) ExecuteMove() {
 	if capturedPiece != NoPiece {
 		// Mark piece as captured by setting position to 0xCC (off-board sentinel)
 		// Assembly line 527: STA BOARD,X (stores $CC into captured piece's position)
-		g.Board[capturedPiece] = 0xCC
+		if capturedPiece < 16 {
+			// White piece (indices 0-15)
+			g.Board[capturedPiece] = 0xCC
+		} else {
+			// Black piece (indices 16-31, stored in BK[0-15])
+			g.BK[capturedPiece-16] = 0xCC
+		}
 	}
 
 	// Move the selected piece to target square
 	// Assembly line 535: STA BOARD,X (stores SQUARE into PIECE's position)
-	g.Board[g.SelectedPiece] = targetSquare
+	if g.SelectedPiece < 16 {
+		// White piece (indices 0-15)
+		g.Board[g.SelectedPiece] = targetSquare
+	} else {
+		// Black piece (indices 16-31, stored in BK[0-15])
+		g.BK[g.SelectedPiece-16] = targetSquare
+	}
 
 	// Reset DIS1 to 0xFF (no piece selected)
 	// DIS2 and DIS3 keep showing the last move
@@ -431,10 +443,17 @@ func (g *GameState) ExecuteMove() {
 // Assembly searches from X=$1F down to X=$00, checking both BOARD and BK arrays.
 // For Phase 4, we only search the current player's Board array.
 func (g *GameState) FindPieceAtSquare(sq board.Square) Piece {
-	// Search Board array (indices 0-15)
+	// Search Board array (indices 0-15) - white pieces
 	for piece := Piece(0); piece < 16; piece++ {
 		if g.Board[piece] == sq {
 			return piece
+		}
+	}
+	// Search BK array (indices 0-15) - black pieces
+	// Return piece index + 16 to match assembly convention (black pieces are 0x10-0x1F)
+	for piece := Piece(0); piece < 16; piece++ {
+		if g.BK[piece] == sq {
+			return piece + 16
 		}
 	}
 	// Not found
