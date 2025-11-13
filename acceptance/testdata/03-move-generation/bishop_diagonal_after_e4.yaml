@@ -9,17 +9,18 @@ steps:
     should_continue: true
   - command: "L"
     should_continue: true
-    expected_output_contains:
+    expected_display: |-
       # Bishop f1 diagonal moves (all squares until blocked)
-      - "04 13 (Bf1-e2)"
-      - "04 22 (Bf1-d3)"
-      - "04 31 (Bf1-c4)"
-      - "04 40 (Bf1-b5)"
-      - "04 4F (Bf1-a6)"
+      - 04 13
+      - 04 22
+      - 04 31
+      - 04 40
+      - 04 4F
     expected_output_not_contains:
       # Bishop cannot move backwards or to other diagonals
-      - "04 05 (Bf1-f2)"
-      - "04 03 (Bf1-d1)"
+      - 04 05
+      - 04 03
       # Bishop c1 still blocked by d2 pawn
-      - "02 11"
-      - "02 20"
+      - 02 11
+      - 02 20
+  - commands: "Q"

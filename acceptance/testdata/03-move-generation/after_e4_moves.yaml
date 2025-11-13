@@ -9,39 +9,40 @@ steps:
     should_continue: true
   - command: "L"
     should_continue: true
-    expected_output_contains:
+    expected_display: |-
       # Pawn at e4 can now advance
-      - "34 44 (e4-e5)"
+      - 34 44
       # Other pawn moves still available
-      - "17 27 (h2-h3)"
-      - "17 37 (h2-h4)"
-      - "16 26 (g2-g3)"
-      - "16 36 (g2-g4)"
-      - "15 25 (f2-f3)"
-      - "15 35 (f2-f4)"
-      - "13 23 (d2-d3)"
-      - "13 33 (d2-d4)"
-      - "12 22 (c2-c3)"
-      - "12 32 (c2-c4)"
-      - "11 21 (b2-b3)"
-      - "11 31 (b2-b4)"
-      - "10 20 (a2-a3)"
-      - "10 30 (a2-a4)"
+      - 17 27
+      - 17 37
+      - 16 26
+      - 16 36
+      - 15 25
+      - 15 35
+      - 13 23
+      - 13 33
+      - 12 22
+      - 12 32
+      - 11 21
+      - 11 31
+      - 10 20
+      - 10 30
       # Bishop f1 can now move
-      - "04 13 (Bf1-e2)"
-      - "04 22 (Bf1-d3)"
-      - "04 31 (Bf1-c4)"
-      - "04 40 (Bf1-b5)"
-      - "04 4F (Bf1-a6)"
+      - 04 13
+      - 04 22
+      - 04 31
+      - 04 40
+      - "04 4F"
       # Queen d1 can now move
-      - "03 14 (Qd1-e2)"
-      - "03 23 (Qd1-f3)"
-      - "03 32 (Qd1-g4)"
-      - "03 41 (Qd1-h5)"
+      - 03 14
+      - 03 23
+      - 03 32
+      - 03 41
       # King can step forward
-      - "00 04 (Ke1-e2)"
+      - 00 04
       # Knights still available
-      - "06 27 (Ng1-h3)"
-      - "06 25 (Ng1-f3)"
-      - "01 22 (Nb1-c3)"
-      - "01 20 (Nb1-a3)"
+      - 06 27
+      - 06 25
+      - 01 22
+      - 01 20
+  - commands: "Q"
