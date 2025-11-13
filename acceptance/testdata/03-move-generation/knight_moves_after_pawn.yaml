@@ -1,36 +1,71 @@
 name: "Knight Moves After Pawn Advance"
 description: "After a2-a4, knight at b1 still has same moves (not blocked)"
 skip_6502: true  # L command doesn't exist in original
-skip: true
 steps:
-  - command: "C"
-    should_continue: true
-  - command: "1030\r"
-    should_continue: true
-  - command: "L"
+  - commands: "C"
     should_continue: true
     expected_display: |-
-      # Knight b1 moves (unchanged - wasn't blocked)
-      - 01 22
-      - 01 20
-      # Knight g1 moves
-      - 06 27
-      - 06 25
-      # Pawn a4 can now advance
-      - 30 40
-      # Other pawns
-      - 17 27
-      - 17 37
-      - 16 26
-      - 16 36
-      - 15 25
-      - 15 35
-      - 14 24
-      - 14 34
+      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
+       00 01 02 03 04 05 06 07
+      -------------------------
+      |WR|WN|WB|WK|WQ|WB|WN|WR|00
+      |WP|WP|WP|WP|WP|WP|WP|WP|10
+      |  |**|  |**|  |**|  |**|20
+      |**|  |**|  |**|  |**|  |30
+      |  |**|  |**|  |**|  |**|40
+      |**|  |**|  |**|  |**|  |50
+      |BP|BP|BP|BP|BP|BP|BP|BP|60
+      |BR|BN|BB|BK|BQ|BB|BN|BR|70
+      -------------------------
+       00 01 02 03 04 05 06 07
+      CC CC CC
+
+  - commands: "1030\r"
+    should_continue: true
+    expected_display: |-
+      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
+       00 01 02 03 04 05 06 07
+      -------------------------
+      |WR|WN|WB|WK|WQ|WB|WN|WR|00
+      |**|WP|WP|WP|WP|WP|WP|WP|10
+      |  |**|  |**|  |**|  |**|20
+      |WP|  |**|  |**|  |**|  |30
+      |  |**|  |**|  |**|  |**|40
+      |**|  |**|  |**|  |**|  |50
+      |BP|BP|BP|BP|BP|BP|BP|BP|60
+      |BR|BN|BB|BK|BQ|BB|BN|BR|70
+      -------------------------
+       00 01 02 03 04 05 06 07
+      FF 10 30
+
+  - commands: "L"
+    should_continue: true
+    expected_display: |-
+      # All legal moves after a2-a4
+      # GNM order: pieces 15 down to 0
+      # Pawns (not including a-pawn which moved)
       - 13 23
       - 13 33
+      - 14 24
+      - 14 34
+      - 15 25
+      - 15 35
       - 12 22
       - 12 32
+      - 16 26
+      - 16 36
       - 11 21
       - 11 31
+      - 17 27
+      - 17 37
+      # a-pawn at 30 can now advance
+      - 30 40
+      # Knights (unchanged - not blocked by pawn move)
+      - 06 27
+      - 06 25
+      - 01 22
+      - 01 20
+      # Rook a1 (piece 2) now has moves (a2-a3, a2-a4 squares now accessible)
+      - 00 10
+      - 00 20
   - commands: "Q"
