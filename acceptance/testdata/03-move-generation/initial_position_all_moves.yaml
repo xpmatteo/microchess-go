@@ -1,0 +1,32 @@
+name: "Initial Position All Legal Moves"
+description: "List all 20 legal moves from starting position in GNM order"
+skip_6502: true  # L command doesn't exist in original
+skip: true
+steps:
+  - command: "C"
+    should_continue: true
+  - command: "L"
+    should_continue: true
+    expected_output_contains:
+      # Pawns (indices 15 down to 8) - generated last by GNM
+      - "17 27 (h2-h3)"
+      - "17 37 (h2-h4)"
+      - "16 26 (g2-g3)"
+      - "16 36 (g2-g4)"
+      - "15 25 (f2-f3)"
+      - "15 35 (f2-f4)"
+      - "14 24 (e2-e3)"
+      - "14 34 (e2-e4)"
+      - "13 23 (d2-d3)"
+      - "13 33 (d2-d4)"
+      - "12 22 (c2-c3)"
+      - "12 32 (c2-c4)"
+      - "11 21 (b2-b3)"
+      - "11 31 (b2-b4)"
+      - "10 20 (a2-a3)"
+      - "10 30 (a2-a4)"
+      # Knights (indices 7 and 6)
+      - "06 27 (Ng1-h3)"
+      - "06 25 (Ng1-f3)"
+      - "01 22 (Nb1-c3)"
+      - "01 20 (Nb1-a3)"

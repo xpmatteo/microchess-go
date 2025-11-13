@@ -1,0 +1,35 @@
+name: "Knight Moves After Pawn Advance"
+description: "After a2-a4, knight at b1 still has same moves (not blocked)"
+skip_6502: true  # L command doesn't exist in original
+skip: true
+steps:
+  - command: "C"
+    should_continue: true
+  - command: "1030\r"
+    should_continue: true
+  - command: "L"
+    should_continue: true
+    expected_output_contains:
+      # Knight b1 moves (unchanged - wasn't blocked)
+      - "01 22 (Nb1-c3)"
+      - "01 20 (Nb1-a3)"
+      # Knight g1 moves
+      - "06 27 (Ng1-h3)"
+      - "06 25 (Ng1-f3)"
+      # Pawn a4 can now advance
+      - "30 40 (a4-a5)"
+      # Other pawns
+      - "17 27 (h2-h3)"
+      - "17 37 (h2-h4)"
+      - "16 26 (g2-g3)"
+      - "16 36 (g2-g4)"
+      - "15 25 (f2-f3)"
+      - "15 35 (f2-f4)"
+      - "14 24 (e2-e3)"
+      - "14 34 (e2-e4)"
+      - "13 23 (d2-d3)"
+      - "13 33 (d2-d4)"
+      - "12 22 (c2-c3)"
+      - "12 32 (c2-c4)"
+      - "11 21 (b2-b3)"
+      - "11 31 (b2-b4)"
