@@ -5,7 +5,6 @@ package microchess
 
 import (
 	"fmt"
-	"sort"
 
 	"github.com/matteo/microchess-go/pkg/board"
 )
@@ -19,6 +18,7 @@ func (g *GameState) ListLegalMoves() {
 	var moves []Move
 
 	// Use GNM with a callback that collects moves
+	// Moves are collected in GNM's natural generation order (piece 15 -> 0)
 	g.GNM(func(from, to board.Square, piece Piece) {
 		moves = append(moves, Move{
 			From:  from,
@@ -27,44 +27,10 @@ func (g *GameState) ListLegalMoves() {
 		})
 	})
 
-	// Sort moves for consistent output (by from square, then to square)
-	sort.Slice(moves, func(i, j int) bool {
-		if moves[i].From != moves[j].From {
-			return moves[i].From < moves[j].From
-		}
-		return moves[i].To < moves[j].To
-	})
-
-	// Display moves
-	_, _ = fmt.Fprintf(g.out, "\r\nLegal moves (%d):\r\n", len(moves))
-
+	// Display moves in hex format matching LED display style
+	// Format: "- FF TT" where FF is from square, TT is to square (both in hex)
+	// Note: Explicit uint8() cast needed for fmt.Fprintf variadic arguments
 	for _, move := range moves {
-		// Show in algebraic notation for clarity (e2e4)
-		// TODO: Fix hex formatting issue and use 0x88 format instead
-		from := move.From.String()
-		to := move.To.String()
-		pieceChar := getPieceTypeChar(move.Piece)
-		_, _ = fmt.Fprintf(g.out, "  %s%s  (%c)\n", from, to, pieceChar)
-	}
-
-	_, _ = fmt.Fprintf(g.out, "\r\n")
-}
-
-// getPieceTypeChar returns a single character representing the piece type.
-// K=King, Q=Queen, R=Rook, B=Bishop, N=Knight, P=Pawn
-func getPieceTypeChar(piece Piece) rune {
-	switch piece {
-	case PieceKing:
-		return 'K'
-	case PieceQueen:
-		return 'Q'
-	case PieceRook1, PieceRook2:
-		return 'R'
-	case PieceBishop1, PieceBishop2:
-		return 'B'
-	case PieceKnight1, PieceKnight2:
-		return 'N'
-	default: // Pawns
-		return 'P'
+		_, _ = fmt.Fprintf(g.out, "- %02X %02X\r\n", uint8(move.From), uint8(move.To))
 	}
 }

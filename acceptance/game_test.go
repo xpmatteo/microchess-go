@@ -120,6 +120,11 @@ func runTestCase(t *testing.T, tc testCase) {
 		expected := strings.TrimSpace(step.ExpectedDisplay)
 		actual := strings.ReplaceAll(lastDisplay, "\r\n", "\n")
 		actual = strings.TrimSpace(actual)
+
+		// Filter out comment lines (lines starting with #) from expected output
+		// This allows us to document test expectations without affecting comparison
+		expected = filterCommentLines(expected)
+
 		// Not using testify for this assertion, so that we produce a more readable error message
 		if expected != actual {
 			t.Errorf("Step %d (%s): Display mismatch\n=== EXPECTED ===\n%s\n=== ACTUAL (Go) ===\n%s\n=== END ===",
@@ -146,4 +151,18 @@ func extractLastDisplay(output string) string {
 	// Get the last display and prepend the header back
 	lastDisplay := displays[len(displays)-1]
 	return "MicroChess" + lastDisplay
+}
+
+// filterCommentLines removes lines starting with # from the input string.
+// This allows test expectations to include documentation comments.
+func filterCommentLines(input string) string {
+	lines := strings.Split(input, "\n")
+	var filtered []string
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if !strings.HasPrefix(trimmed, "#") {
+			filtered = append(filtered, line)
+		}
+	}
+	return strings.Join(filtered, "\n")
 }

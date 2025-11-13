@@ -2,46 +2,85 @@ name: "Legal Moves After 1.e4"
 description: "After e2-e4, bishop and queen diagonals open up"
 skip_6502: true  # L command doesn't exist in original
 steps:
-  - command: "C"
-    should_continue: true
-  - command: "1434\r"
-    should_continue: true
-  - command: "L"
+  - commands: "C"
     should_continue: true
     expected_display: |-
-      # Pawn at e4 can now advance
-      - 34 44
-      # Other pawn moves still available
-      - 17 27
-      - 17 37
-      - 16 26
-      - 16 36
-      - 15 25
-      - 15 35
+      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
+       00 01 02 03 04 05 06 07
+      -------------------------
+      |WR|WN|WB|WK|WQ|WB|WN|WR|00
+      |WP|WP|WP|WP|WP|WP|WP|WP|10
+      |  |**|  |**|  |**|  |**|20
+      |**|  |**|  |**|  |**|  |30
+      |  |**|  |**|  |**|  |**|40
+      |**|  |**|  |**|  |**|  |50
+      |BP|BP|BP|BP|BP|BP|BP|BP|60
+      |BR|BN|BB|BK|BQ|BB|BN|BR|70
+      -------------------------
+       00 01 02 03 04 05 06 07
+      CC CC CC
+
+  - commands: "1434\r"
+    should_continue: true
+    expected_display: |-
+      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
+       00 01 02 03 04 05 06 07
+      -------------------------
+      |WR|WN|WB|WK|WQ|WB|WN|WR|00
+      |WP|WP|WP|WP|**|WP|WP|WP|10
+      |  |**|  |**|  |**|  |**|20
+      |**|  |**|  |WP|  |**|  |30
+      |  |**|  |**|  |**|  |**|40
+      |**|  |**|  |**|  |**|  |50
+      |BP|BP|BP|BP|BP|BP|BP|BP|60
+      |BR|BN|BB|BK|BQ|BB|BN|BR|70
+      -------------------------
+       00 01 02 03 04 05 06 07
+      FF 14 34
+
+  - commands: "L"
+    should_continue: true
+    expected_display: |-
+      # GNM generates moves piece by piece from index 15 down to 0
+      # Piece 12 (d-file pawn at 13)
       - 13 23
       - 13 33
+      # Piece 14 (e-file pawn now at 34)
+      - 34 44
+      # Piece 14 (another pawn at 15)
+      - 15 25
+      - 15 35
+      # Piece 11 (c-file pawn at 12)
       - 12 22
       - 12 32
+      # Piece 15 (f-file pawn at 16)
+      - 16 26
+      - 16 36
+      # Piece 10 (b-file pawn at 11)
       - 11 21
       - 11 31
+      # Piece 8 (h-file pawn at 17)
+      - 17 27
+      - 17 37
+      # Piece 9 (a-file pawn at 10)
       - 10 20
       - 10 30
-      # Bishop f1 can now move
-      - 04 13
-      - 04 22
-      - 04 31
-      - 04 40
-      - "04 4F"
-      # Queen d1 can now move
-      - 03 14
-      - 03 23
-      - 03 32
-      - 03 41
-      # King can step forward
-      - 00 04
-      # Knights still available
+      # Piece 7 (knight at 06)
       - 06 27
       - 06 25
+      - 06 14
+      # Piece 6 (knight at 01)
       - 01 22
       - 01 20
+      # Piece 5 (bishop at 05 - f1, diagonal now open!)
+      - 05 14
+      - 05 23
+      - 05 32
+      - 05 41
+      - 05 50
+      # Piece 4 (bishop at 04 - c1)
+      - 04 14
+      - 04 24
+      # Piece 1 (queen at 03 - d1, diagonal now open!)
+      - 03 14
   - commands: "Q"
