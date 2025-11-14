@@ -3,32 +3,25 @@ name: "Double move by black"
 skip_6502: true  # S command doesn't exist in original
 
 steps:
-  - commands: "C1333\r0140\rS"
+  - commands: "C1333\r0440\rS"
     should_continue: true
     expected_display: |-
       MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
        00 01 02 03 04 05 06 07
       -------------------------
       |WR|WN|WB|WK|  |WB|WN|WR|00
-      -------------------------
       |WP|WP|WP|  |WP|WP|WP|WP|10
-      -------------------------
       |  |**|  |**|  |**|  |**|20
-      -------------------------
       |**|  |**|WP|**|  |**|  |30
-      -------------------------
       |WQ|**|  |**|  |**|  |**|40
-      -------------------------
       |**|  |**|  |**|  |**|  |50
-      -------------------------
       |BP|BP|BP|BP|BP|BP|BP|BP|60
-      -------------------------
       |BR|BN|BB|BK|BQ|BB|BN|BR|70
       -------------------------
        00 01 02 03 04 05 06 07
-      01 04 40
+      FF 04 40
       
-      Position Evaluation: d2
+      Position Evaluation: d9
 #      Mobility: W=30 B=20
 #      Max Capture: W=0 B=0
 #      Capture Count: W=0 B=0
