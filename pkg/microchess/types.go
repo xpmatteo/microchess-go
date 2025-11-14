@@ -75,8 +75,29 @@ type GameState struct {
 	MoveSquare board.Square // Working square for move calculation (assembly: SQUARE at $B1)
 	MoveN      uint8        // Move direction index into MOVEX (assembly: MOVEN at $B6)
 
+	// STATE machine and check detection
+	// Assembly: $B5, $B4
+	State  int8  // STATE machine value for analysis depth control (assembly: STATE at $B5)
+	InChek uint8 // Check detection flag: 0xF9=safe, 0x00=king capturable (assembly: INCHEK at $B4)
+
+	// Move history stack (replaces assembly's SP2 dual-stack mechanism)
+	// Used by MOVE/UMOVE to make and unmake trial moves during CHKCHK
+	MoveHistory []MoveRecord
+
 	// I/O for display and input
 	out io.Writer
+}
+
+// MoveRecord stores the state of a move for undo purposes.
+// This replaces the assembly's SP2 stack mechanism (dual stack for game state).
+// Assembly reference: MOVE routine (lines 511-539) pushes to SP2 stack
+type MoveRecord struct {
+	FromSquare     board.Square // Original square of moving piece
+	ToSquare       board.Square // Destination square
+	MovingPiece    Piece        // Index of piece being moved
+	CapturedPiece  Piece        // Index of captured piece (NoPiece if none)
+	CapturedSquare board.Square // Original square of captured piece
+	MoveN          uint8        // MOVEN value at time of move
 }
 
 // MOVEX is the direction offset table used for move generation and validation.

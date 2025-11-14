@@ -18,6 +18,41 @@ type Move struct {
 // This allows GNM to either collect moves (for 'L' command) or call JANUS (for computer play).
 type MoveCallback func(from, to board.Square, piece Piece)
 
+// janusCheckDetection implements the JANUS check detection logic (assembly lines 223-234).
+// When STATE == -7 (0xF9), it checks if the current move captures the king at BK[0].
+// If so, it sets InChek = 0x00 to indicate the king is in check.
+//
+// Assembly reference:
+//
+//	NOCOUNT CPX     #$F9          ; Is STATE = -7?
+//	        BNE     TREE
+//	        LDA     BK            ; Get king position
+//	        CMP     SQUARE        ; Does this move attack the king?
+//	        BNE     RETJ
+//	        LDA     #$00          ; YES - set INCHEK = 0
+//	        STA     INCHEK
+//	RETJ    RTS
+//
+// Returns true if check detection is active and we should skip calling the normal callback.
+func (g *GameState) janusCheckDetection() bool {
+	// Check if we're in check detection mode (STATE == -7 / 0xF9)
+	if g.State != -7 {
+		return false // Not in check detection mode
+	}
+
+	// Check if this move captures the king at BK[0]
+	// Assembly: LDA BK / CMP SQUARE
+	if g.MoveSquare == g.BK[0] {
+		// King can be captured! Set InChek = 0x00
+		// Assembly: LDA #$00 / STA INCHEK
+		g.InChek = 0x00
+	}
+
+	// Return true to indicate we're in check detection mode
+	// The caller should skip the normal callback (JANUS just detects, doesn't evaluate)
+	return true
+}
+
 // Reset restores MoveSquare to the current piece's board position.
 // This implements the RESET routine from assembly line 473.
 //
@@ -53,9 +88,16 @@ func (g *GameState) singleMove(callback MoveCallback) bool {
 	fromSquare := g.MoveSquare
 	result := g.CMOVE(fromSquare, g.MoveN)
 
-	// If legal (not illegal and not in check), call callback
+	// If legal (not illegal and not in check), process the move
 	if !result.Illegal && !result.InCheck {
-		callback(fromSquare, g.MoveSquare, g.MovePiece)
+		// JANUS check detection: If STATE==-7, check if this move attacks the king
+		// If so, set InChek=0x00 and skip callback (assembly lines 223-234)
+		if !g.janusCheckDetection() {
+			// Not in check detection mode, call normal callback (if provided)
+			if callback != nil {
+				callback(fromSquare, g.MoveSquare, g.MovePiece)
+			}
+		}
 	}
 
 	// Restore piece position
@@ -106,8 +148,14 @@ func (g *GameState) slidingLine(callback MoveCallback) bool {
 			break
 		}
 
-		// Legal move - call callback
-		callback(fromSquare, g.MoveSquare, g.MovePiece)
+		// Legal move - process it
+		// JANUS check detection: If STATE==-7, check if this move attacks the king
+		if !g.janusCheckDetection() {
+			// Not in check detection mode, call normal callback (if provided)
+			if callback != nil {
+				callback(fromSquare, g.MoveSquare, g.MovePiece)
+			}
+		}
 
 		// If capture, stop sliding (assembly: BVC LINE - branch if V clear)
 		if result.Capture {
@@ -251,16 +299,26 @@ func (g *GameState) generatePawnMoves(callback MoveCallback) {
 	// Try right diagonal capture (MOVEN=6)
 	g.MoveN = 6
 	result := g.CMOVE(g.MoveSquare, g.MoveN)
-	if result.Capture && !result.Illegal {
-		callback(fromSquare, g.MoveSquare, g.MovePiece)
+	if result.Capture && !result.Illegal && !result.InCheck {
+		// JANUS check detection
+		if !g.janusCheckDetection() {
+			if callback != nil {
+				callback(fromSquare, g.MoveSquare, g.MovePiece)
+			}
+		}
 	}
 
 	// Try left diagonal capture (MOVEN=5)
 	g.Reset()
 	g.MoveN = 5
 	result = g.CMOVE(g.MoveSquare, g.MoveN)
-	if result.Capture && !result.Illegal {
-		callback(fromSquare, g.MoveSquare, g.MovePiece)
+	if result.Capture && !result.Illegal && !result.InCheck {
+		// JANUS check detection
+		if !g.janusCheckDetection() {
+			if callback != nil {
+				callback(fromSquare, g.MoveSquare, g.MovePiece)
+			}
+		}
 	}
 
 	// Try forward move(s) (MOVEN=4)
@@ -270,13 +328,18 @@ func (g *GameState) generatePawnMoves(callback MoveCallback) {
 	for {
 		result = g.CMOVE(g.MoveSquare, g.MoveN)
 
-		// If capture or illegal, pawn can't move forward
-		if result.Capture || result.Illegal {
+		// If capture, illegal, or leaves king in check, pawn can't move forward
+		if result.Capture || result.Illegal || result.InCheck {
 			break
 		}
 
 		// Legal forward move
-		callback(fromSquare, g.MoveSquare, g.MovePiece)
+		// JANUS check detection
+		if !g.janusCheckDetection() {
+			if callback != nil {
+				callback(fromSquare, g.MoveSquare, g.MovePiece)
+			}
+		}
 
 		// Check if on rank 2 (can do double move)
 		// Assembly: AND #$F0 / CMP #$20

@@ -51,6 +51,5 @@ steps:
       # Bishop c1 (piece 4)
       - 04 14
       - 04 24
-      # Queen (piece 1)
-      - 03 14
+      # King at d1 (piece 0) - CANNOT move to e2 (03 14) - would be in check from black pawn at d3
   - commands: "Q"

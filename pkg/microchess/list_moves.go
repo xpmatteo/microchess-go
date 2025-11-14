@@ -14,11 +14,18 @@ import (
 //
 // Output format matches original's LED display style: hex coordinates (14 34 for e2-e4)
 func (g *GameState) ListLegalMoves() {
+	// Set STATE = 4 to enable CHKCHK during move generation
+	// This ensures moves that expose the king to check are filtered out
+	// Assembly reference: In GO routine (line 601), STATE is set to 4 before GNMZ
+	savedState := g.State
+	g.State = 4
+
 	// Collect all moves
 	var moves []Move
 
 	// Use GNM with a callback that collects moves
 	// Moves are collected in GNM's natural generation order (piece 15 -> 0)
+	// CHKCHK will run for each move since STATE=4 (0 <= STATE < 8)
 	g.GNM(func(from, to board.Square, piece Piece) {
 		moves = append(moves, Move{
 			From:  from,
@@ -26,6 +33,9 @@ func (g *GameState) ListLegalMoves() {
 			Piece: piece,
 		})
 	})
+
+	// Restore STATE
+	g.State = savedState
 
 	// Display moves in hex format matching LED display style
 	// Format: "- FF TT" where FF is from square, TT is to square (both in hex)

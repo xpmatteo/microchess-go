@@ -227,3 +227,4 @@ diff go-output.txt 6502-output.txt
    ```
 
 This ensures the Go port's behavior is validated against the actual 1976 original, not against assumptions.
+- always run all the tests before completing a task

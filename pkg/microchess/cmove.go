@@ -114,14 +114,87 @@ func (g *GameState) CMOVE(from board.Square, moven uint8) CMoveResult {
 		}
 	}
 
-	// Step 4: Return result
-	// Assembly line 424 (SPX): Check if CHKCHK needed
-	// We skip CHKCHK for now (lines 426-458), so go directly to RETL
-
-	// Assembly line 459 (RETL): Legal move
-	return CMoveResult{
-		Illegal: false,       // Not illegal
-		Capture: captureFlag, // Capture if opponent piece found
-		InCheck: false,       // No check (CHKCHK not implemented)
+	// Step 4: Check if CHKCHK (check-check) is needed
+	// Assembly line 424 (SPX): Check STATE to decide if CHKCHK runs
+	// CHKCHK only runs when 0 <= STATE < 8
+	//
+	// Assembly lines 426-434:
+	//   SPX     LDA     STATE
+	//           BMI     RETL            ; Skip if STATE < 0
+	//           CMP     #$08
+	//           BPL     RETL            ; Skip if STATE >= 8
+	//
+	// Skip CHKCHK if STATE < 0 or STATE >= 8
+	if g.State < 0 || g.State >= 8 {
+		// RETL: Legal move without check verification
+		return CMoveResult{
+			Illegal: false,
+			Capture: captureFlag,
+			InCheck: false,
+		}
 	}
+
+	// CHKCHK: Verify this move doesn't leave our king in check
+	// Assembly lines 444-460
+	//
+	// Algorithm:
+	//   1. Save current STATE
+	//   2. Set STATE = 0xF9 (-7), InChek = 0xF9
+	//   3. MOVE() - make trial move
+	//   4. REVERSE() - switch to opponent's perspective
+	//   5. GNM() - generate all opponent replies
+	//      - JANUS detects if any move captures BK[0] (our king)
+	//      - If king capturable, JANUS sets InChek = 0x00
+	//   6. RUM() - REVERSE and UMOVE to restore
+	//   7. Check if InChek == 0x00 (king in check)
+	//   8. Restore STATE
+
+	// Save current STATE and result
+	// Assembly: PHA / PHP (push A and processor flags)
+	savedState := g.State
+	savedResult := CMoveResult{
+		Illegal: false,
+		Capture: captureFlag,
+		InCheck: false,
+	}
+
+	// Set STATE = 0xF9 (-7) for check detection mode
+	// Assembly: LDA #$F9 / STA STATE
+	g.State = -7 // 0xF9 in signed int8
+
+	// Initialize InChek = 0xF9 (assume king is safe)
+	// Assembly: STA INCHEK
+	g.InChek = 0xF9
+
+	// Make the trial move
+	// Assembly: JSR MOVE
+	g.MOVE()
+
+	// Switch to opponent's perspective
+	// Assembly: JSR REVERSE
+	g.Reverse()
+
+	// Generate all opponent moves (JANUS will detect king capture)
+	// Assembly: JSR GNM
+	// We pass a nil callback since we only care about check detection
+	g.GNM(nil)
+
+	// Restore board: REVERSE and UMOVE
+	// Assembly: JSR RUM
+	g.RUM()
+
+	// Restore STATE
+	// Assembly: PLP / PLA / STA STATE
+	g.State = savedState
+
+	// Check if king was in check
+	// Assembly: LDA INCHEK / BMI RETL (branch if INCHEK still negative)
+	// If InChek changed from 0xF9 to 0x00, the king can be captured
+	if g.InChek != 0xF9 {
+		// King is in check! This move is illegal
+		// Assembly: SEC / LDA #$FF / RTS
+		savedResult.InCheck = true
+	}
+
+	return savedResult
 }

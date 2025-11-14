@@ -1,7 +1,7 @@
 name: "Exposing king to check is illegal"
 skip_6502: true  # L command doesn't exist in original
 steps:
-  - commands: "C7636\r"
+  - commands: "C7536\r"
     should_continue: true
     expected_display: |-
       MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
@@ -10,14 +10,14 @@ steps:
       |WR|WN|WB|WK|WQ|WB|WN|WR|00
       |WP|WP|WP|WP|WP|WP|WP|WP|10
       |  |**|  |**|  |**|  |**|20
-      |**|  |**|  |**|  |BN|  |30
+      |**|  |**|  |**|  |BB|  |30
       |  |**|  |**|  |**|  |**|40
       |**|  |**|  |**|  |**|  |50
       |BP|BP|BP|BP|BP|BP|BP|BP|60
-      |BR|BN|BB|BK|BQ|BB|**|BR|70
+      |BR|BN|BB|BK|BQ|  |BN|BR|70
       -------------------------
        00 01 02 03 04 05 06 07
-      FF 76 36
+      FF 75 36
 
   - commands: "L"
     should_continue: true
@@ -25,14 +25,13 @@ steps:
       # Pawns
       - 13 23
       - 13 33
-      # illegal: check - 14 24
-      # illegal: check - 14 34
+      # illegal: check - 14 24 (e2-e3 exposes king to bishop on g4)
+      # illegal: check - 14 34 (e2-e4 exposes king to bishop on g4)
       - 15 25
       - 15 35
       - 12 22
       - 12 32
       - 16 26
-      # illegal: pawn cannot capture this way - 16 36
       - 11 21
       - 11 31
       - 17 27

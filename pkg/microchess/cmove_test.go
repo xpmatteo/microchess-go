@@ -13,6 +13,7 @@ import (
 
 // TestCMOVE_OffBoardDetection tests the 0x88 edge detection logic.
 // CMOVE should return illegal (N=true) when the calculated target square has bit 0x88 set.
+// Note: STATE is set to -1 to skip CHKCHK, testing only basic edge detection.
 func TestCMOVE_OffBoardDetection(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -122,6 +123,9 @@ func TestCMOVE_OffBoardDetection(t *testing.T) {
 			// Place a piece at the starting square
 			game.Board[PieceKing] = tt.startSquare
 
+			// Skip CHKCHK for basic edge detection test
+			game.State = -1
+
 			result := game.CMOVE(tt.startSquare, tt.moven)
 
 			// Verify move is illegal (N flag set)
@@ -140,6 +144,7 @@ func TestCMOVE_OffBoardDetection(t *testing.T) {
 
 // TestCMOVE_EmptySquare tests moving to an empty square on the board.
 // CMOVE should return legal (N=false, V=false, C=false).
+// Note: STATE is set to -1 to skip CHKCHK, testing only basic collision detection.
 func TestCMOVE_EmptySquare(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -185,6 +190,9 @@ func TestCMOVE_EmptySquare(t *testing.T) {
 			// Place a piece at the starting square
 			game.Board[PieceKing] = tt.startSquare
 
+			// Skip CHKCHK for basic empty square test
+			game.State = -1
+
 			result := game.CMOVE(tt.startSquare, tt.moven)
 
 			// Verify move is legal with no capture
@@ -200,6 +208,7 @@ func TestCMOVE_EmptySquare(t *testing.T) {
 
 // TestCMOVE_OwnPieceCollision tests collision detection with own pieces.
 // CMOVE should return illegal (N=true, V=false, C=false) when target square has own piece.
+// Note: STATE is set to -1 to skip CHKCHK, testing only basic collision detection.
 func TestCMOVE_OwnPieceCollision(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -245,6 +254,9 @@ func TestCMOVE_OwnPieceCollision(t *testing.T) {
 			// Place own blocking piece
 			game.Board[tt.blockingPiece] = tt.blockingSquare
 
+			// Skip CHKCHK for basic collision test
+			game.State = -1
+
 			result := game.CMOVE(tt.startSquare, tt.moven)
 
 			// Verify move is illegal with no capture flag
@@ -260,6 +272,7 @@ func TestCMOVE_OwnPieceCollision(t *testing.T) {
 
 // TestCMOVE_OpponentPieceCollision tests collision detection with opponent pieces.
 // CMOVE should return legal with capture flag (N=false, V=true, C=false).
+// Note: STATE is set to -1 to skip CHKCHK, testing only basic capture detection.
 func TestCMOVE_OpponentPieceCollision(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -312,6 +325,9 @@ func TestCMOVE_OpponentPieceCollision(t *testing.T) {
 			// Place opponent piece
 			game.BK[tt.opponentPiece] = tt.opponentSquare
 
+			// Skip CHKCHK for basic capture test
+			game.State = -1
+
 			result := game.CMOVE(tt.startSquare, tt.moven)
 
 			// Verify move is legal with capture flag set
@@ -322,6 +338,126 @@ func TestCMOVE_OpponentPieceCollision(t *testing.T) {
 			assert.True(t, result.Capture, "V flag should be set (capture)")
 			assert.False(t, result.InCheck, "C flag should be clear (no check)")
 			assert.True(t, result.isCapture(), "isCapture() should return true")
+		})
+	}
+}
+
+// TestCMOVE_CHKCHKDetectsPinnedPiece tests that CHKCHK detects when a move exposes the king to check.
+// This tests the bishop pin scenario from the acceptance test.
+func TestCMOVE_CHKCHKDetectsPinnedPiece(t *testing.T) {
+	game := NewGame(&bytes.Buffer{})
+	game.SetupBoard()
+
+	// Create a pin: King at d1 (0x03), pawn at e2 (0x14), black bishop at g4 (0x36)
+	// The diagonal d1-e2-f3-g4 means the pawn is pinned and cannot move
+	game.BK[5] = 0x36 // Black kingside bishop at g4
+
+	// Enable CHKCHK by setting STATE=4
+	game.State = 4
+
+	tests := []struct {
+		name        string
+		piece       Piece
+		fromSquare  board.Square
+		moven       uint8
+		expectCheck bool
+		description string
+	}{
+		{
+			name:        "e2-e3 exposes king to bishop",
+			piece:       PiecePawn7, // e-file pawn (piece 14)
+			fromSquare:  0x14,       // e2
+			moven:       4,          // up
+			expectCheck: true,
+			description: "Moving pinned pawn up one square exposes king",
+		},
+		{
+			name:        "e2-e4 exposes king to bishop",
+			piece:       PiecePawn7, // e-file pawn
+			fromSquare:  0x14,       // e2
+			moven:       4,          // up (would need two calls for double move, but single test is enough)
+			expectCheck: true,
+			description: "Moving pinned pawn up exposes king",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Set up the move
+			game.MovePiece = tt.piece
+			game.MoveSquare = tt.fromSquare
+
+			// Call CMOVE (which will run CHKCHK)
+			result := game.CMOVE(tt.fromSquare, tt.moven)
+
+			// Verify check detection
+			assert.Equal(t, tt.expectCheck, result.InCheck,
+				"%s: InCheck should be %v", tt.description, tt.expectCheck)
+
+			if tt.expectCheck {
+				assert.False(t, result.isLegal(),
+					"%s: Move should not be legal (exposes king)", tt.description)
+			}
+		})
+	}
+}
+
+// TestCMOVE_CHKCHKSkippedWhenNotNeeded tests that CHKCHK is only run when STATE is 0-7.
+func TestCMOVE_CHKCHKSkippedWhenNotNeeded(t *testing.T) {
+	game := NewGame(&bytes.Buffer{})
+	game.SetupBoard()
+
+	// Create the same pin scenario
+	game.BK[5] = 0x36 // Black bishop at g4
+
+	tests := []struct {
+		name        string
+		state       int8
+		expectCheck bool
+		description string
+	}{
+		{
+			name:        "STATE=-1 skips CHKCHK",
+			state:       -1,
+			expectCheck: false,
+			description: "Deep analysis skips check detection",
+		},
+		{
+			name:        "STATE=8 skips CHKCHK",
+			state:       8,
+			expectCheck: false,
+			description: "Continuation moves skip check detection",
+		},
+		{
+			name:        "STATE=0 runs CHKCHK",
+			state:       0,
+			expectCheck: true,
+			description: "Normal move generation includes check detection",
+		},
+		{
+			name:        "STATE=4 runs CHKCHK",
+			state:       4,
+			expectCheck: true,
+			description: "Normal move generation includes check detection",
+		},
+		{
+			name:        "STATE=7 runs CHKCHK",
+			state:       7,
+			expectCheck: true,
+			description: "Normal move generation includes check detection",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			game.State = tt.state
+			game.MovePiece = PiecePawn7 // e-pawn
+			game.MoveSquare = 0x14      // e2
+
+			result := game.CMOVE(0x14, 4) // move up
+
+			assert.Equal(t, tt.expectCheck, result.InCheck,
+				"%s: InCheck should be %v", tt.description, tt.expectCheck)
 		})
 	}
 }
