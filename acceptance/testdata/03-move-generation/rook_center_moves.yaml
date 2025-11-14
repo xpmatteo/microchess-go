@@ -1,0 +1,60 @@
+name: "Rook Moves from Center"
+description: "Rook at d4 (33) should have 4 orthogonal rays"
+skip_6502: true  # L command doesn't exist in original
+steps:
+  - commands: "C0033\r"
+    should_continue: true
+    expected_display: |-
+      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
+       00 01 02 03 04 05 06 07
+      -------------------------
+      |  |WN|WB|WK|WQ|WB|WN|WR|00
+      |WP|WP|WP|WP|WP|WP|WP|WP|10
+      |  |**|  |**|  |**|  |**|20
+      |**|  |**|WR|**|  |**|  |30
+      |  |**|  |**|  |**|  |**|40
+      |**|  |**|  |**|  |**|  |50
+      |BP|BP|BP|BP|BP|BP|BP|BP|60
+      |BR|BN|BB|BK|BQ|BB|BN|BR|70
+      -------------------------
+       00 01 02 03 04 05 06 07
+      FF 00 33
+
+  - commands: "L"
+    should_continue: true
+    expected_display: |-
+      # Rook at d4 (33) has 4 orthogonal rays
+      # Pawns (pieces 15-8) - d-file pawn blocked by rook at 33
+      - 13 23
+      - 14 24
+      - 14 34
+      - 15 25
+      - 15 35
+      - 12 22
+      - 12 32
+      - 16 26
+      - 16 36
+      - 11 21
+      - 11 31
+      - 17 27
+      - 17 37
+      - 10 20
+      - 10 30
+      # Knights (pieces 7 and 6)
+      - 06 27
+      - 06 25
+      - 01 22
+      - 01 20
+      # Rook (piece 2) at 33 - 4 orthogonal rays
+      - 33 43
+      - 33 53
+      - 33 63
+      - 33 34
+      - 33 35
+      - 33 36
+      - 33 37
+      - 33 32
+      - 33 31
+      - 33 30
+      - 33 23
+  - commands: "Q"

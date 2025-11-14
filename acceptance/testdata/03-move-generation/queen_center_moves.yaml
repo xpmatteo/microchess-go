@@ -1,0 +1,70 @@
+name: "Queen Moves from Center"
+description: "Queen at d4 (33) should have 8 rays in all directions"
+skip_6502: true  # L command doesn't exist in original
+steps:
+  - commands: "C0433\r"
+    should_continue: true
+    expected_display: |-
+      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
+       00 01 02 03 04 05 06 07
+      -------------------------
+      |WR|WN|WB|WK|  |WB|WN|WR|00
+      |WP|WP|WP|WP|WP|WP|WP|WP|10
+      |  |**|  |**|  |**|  |**|20
+      |**|  |**|WQ|**|  |**|  |30
+      |  |**|  |**|  |**|  |**|40
+      |**|  |**|  |**|  |**|  |50
+      |BP|BP|BP|BP|BP|BP|BP|BP|60
+      |BR|BN|BB|BK|BQ|BB|BN|BR|70
+      -------------------------
+       00 01 02 03 04 05 06 07
+      FF 04 33
+
+  - commands: "L"
+    should_continue: true
+    expected_display: |-
+      # Queen at d4 (33) has 8 rays in all directions
+      # Pawns (pieces 15-8) - d-file pawn blocked by queen at 33
+      - 13 23
+      - 14 24
+      - 14 34
+      - 15 25
+      - 15 35
+      - 12 22
+      - 12 32
+      - 16 26
+      - 16 36
+      - 11 21
+      - 11 31
+      - 17 27
+      - 17 37
+      - 10 20
+      - 10 30
+      # Knights (pieces 7 and 6)
+      - 06 27
+      - 06 25
+      - 01 22
+      - 01 20
+      # Queen (piece 1) at 33 - 8 rays until edge or piece
+      - 33 24
+      - 33 22
+      - 33 42
+      - 33 51
+      - 33 60
+      - 33 44
+      - 33 55
+      - 33 66
+      - 33 43
+      - 33 53
+      - 33 63
+      - 33 34
+      - 33 35
+      - 33 36
+      - 33 37
+      - 33 32
+      - 33 31
+      - 33 30
+      - 33 23
+      # King (piece 0) can now move to e1 (04) where queen was
+      - 03 04
+  - commands: "Q"

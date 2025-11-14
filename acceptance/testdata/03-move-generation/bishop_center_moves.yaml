@@ -1,0 +1,59 @@
+name: "Bishop Moves from Center"
+description: "Bishop at d4 (33) should have 4 diagonal rays"
+skip_6502: true  # L command doesn't exist in original
+steps:
+  - commands: "C0233\r"
+    should_continue: true
+    expected_display: |-
+      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
+       00 01 02 03 04 05 06 07
+      -------------------------
+      |WR|WN|  |WK|WQ|WB|WN|WR|00
+      |WP|WP|WP|WP|WP|WP|WP|WP|10
+      |  |**|  |**|  |**|  |**|20
+      |**|  |**|WB|**|  |**|  |30
+      |  |**|  |**|  |**|  |**|40
+      |**|  |**|  |**|  |**|  |50
+      |BP|BP|BP|BP|BP|BP|BP|BP|60
+      |BR|BN|BB|BK|BQ|BB|BN|BR|70
+      -------------------------
+       00 01 02 03 04 05 06 07
+      FF 02 33
+
+  - commands: "L"
+    should_continue: true
+    expected_display: |-
+      # Bishop at d4 (33) has 4 diagonal rays
+      # Pawns (pieces 15-8) - d-file pawn blocked by bishop at 33
+      - 13 23
+      - 14 24
+      - 14 34
+      - 15 25
+      - 15 35
+      - 12 22
+      - 12 32
+      - 16 26
+      - 16 36
+      - 11 21
+      - 11 31
+      - 17 27
+      - 17 37
+      - 10 20
+      - 10 30
+      # Knights (pieces 7 and 6)
+      - 06 27
+      - 06 25
+      - 01 22
+      - 01 20
+      # Bishop (piece 4) at 33 - 4 diagonal rays
+      - 33 24
+      - 33 22
+      - 33 42
+      - 33 51
+      - 33 60
+      - 33 44
+      - 33 55
+      - 33 66
+      # King (piece 0) can now move to c1 (02) where bishop was
+      - 03 02
+  - commands: "Q"

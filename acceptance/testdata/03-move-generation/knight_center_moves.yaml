@@ -1,0 +1,55 @@
+name: "Knight Moves from Center"
+description: "Knight at d4 (33) should have 8 L-shaped moves"
+skip_6502: true  # L command doesn't exist in original
+steps:
+  - commands: "C0133\r"
+    should_continue: true
+    expected_display: |-
+      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
+       00 01 02 03 04 05 06 07
+      -------------------------
+      |WR|**|WB|WK|WQ|WB|WN|WR|00
+      |WP|WP|WP|WP|WP|WP|WP|WP|10
+      |  |**|  |**|  |**|  |**|20
+      |**|  |**|WN|**|  |**|  |30
+      |  |**|  |**|  |**|  |**|40
+      |**|  |**|  |**|  |**|  |50
+      |BP|BP|BP|BP|BP|BP|BP|BP|60
+      |BR|BN|BB|BK|BQ|BB|BN|BR|70
+      -------------------------
+       00 01 02 03 04 05 06 07
+      FF 01 33
+
+  - commands: "L"
+    should_continue: true
+    expected_display: |-
+      # Knight at d4 (33) - has 6 L-shaped moves (2 blocked by pawns at rank 1)
+      # Pawns (pieces 15-8) - d-file pawn blocked by knight at 33
+      - 13 23
+      - 14 24
+      - 14 34
+      - 15 25
+      - 15 35
+      - 12 22
+      - 12 32
+      - 16 26
+      - 16 36
+      - 11 21
+      - 11 31
+      - 17 27
+      - 17 37
+      - 10 20
+      - 10 30
+      # Knight (piece 7) on g1
+      - 06 27
+      - 06 25
+      # Knight (piece 6) at 33 - 6 moves (14 and 12 blocked by pawns)
+      - 33 54
+      - 33 52
+      - 33 41
+      - 33 45
+      - 33 25
+      - 33 21
+      # Rook (piece 2) can now move to b1 (01) where knight was
+      - 00 01
+  - commands: "Q"
