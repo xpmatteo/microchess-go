@@ -82,10 +82,10 @@ func (g *GameState) CMOVE(from board.Square, moven uint8) CMoveResult {
 		var pieceSquare board.Square
 
 		if pieceIndex < 16 {
-			// Own pieces (BOARD array)
+			// Board array pieces (indices 0-15)
 			pieceSquare = g.Board[pieceIndex]
 		} else {
-			// Opponent pieces (BK array)
+			// BK array pieces (indices 16-31, stored in BK[0-15])
 			pieceSquare = g.BK[pieceIndex-16]
 		}
 

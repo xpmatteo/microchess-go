@@ -44,14 +44,15 @@ const (
 type GameState struct {
 	// Board representation - piece positions
 	// Board[i] = square where piece i is located (0x88 format)
-	// Indices 0-15 represent white pieces (or current side)
+	// Indices 0-15 represent pieces in Board array (initially at bottom, ranks 0-1)
 	Board [16]board.Square
 
 	// BK is the alternate board used during REVERSE
+	// Indices 0-15 represent pieces in BK array (initially at top, ranks 6-7)
 	// Assembly: $60-$6F
 	BK [16]board.Square
 
-	// REV tracks if board is reversed (0 = white's view, non-zero = black's view)
+	// REV tracks if board is reversed (0 = bottom's view, non-zero = top's view)
 	// Assembly: $70 (REV flag)
 	Reversed bool
 
@@ -120,16 +121,17 @@ var MOVEX = [17]int8{
 // InitialSetup contains the starting positions for all pieces.
 // This matches the SETW/SETB tables from the assembly (lines 672-687).
 //
-// Indices 0-15: White pieces (current side in assembly terminology)
-// In actual play, this is copied to both Board arrays with coordinate transformation for black.
+// Indices 0-15: Board array pieces (initially at bottom, ranks 0-1)
+// Indices 16-31: BK array pieces (initially at top, ranks 6-7)
+// In actual play, this is copied to both arrays with coordinate transformation for top pieces.
 var InitialSetup = [32]board.Square{
-	// White pieces (indices 0-7): K, Q, R, R, B, B, N, N
+	// Board array pieces (indices 0-7): K, Q, R, R, B, B, N, N
 	0x03, 0x04, 0x00, 0x07, 0x02, 0x05, 0x01, 0x06,
-	// White pawns (indices 8-15): specific file ordering from assembly
+	// Board array pawns (indices 8-15): specific file ordering from assembly
 	0x10, 0x17, 0x11, 0x16, 0x12, 0x15, 0x14, 0x13,
-	// Black pieces (indices 16-23): K, Q, R, R, B, B, N, N
+	// BK array pieces (indices 16-23): K, Q, R, R, B, B, N, N
 	0x73, 0x74, 0x70, 0x77, 0x72, 0x75, 0x71, 0x76,
-	// Black pawns (indices 24-31)
+	// BK array pawns (indices 24-31)
 	0x60, 0x67, 0x61, 0x66, 0x62, 0x65, 0x64, 0x63,
 }
 
@@ -148,9 +150,9 @@ func NewGame(out io.Writer) *GameState {
 		g.Board[i] = 0xFF // Off-board position
 		g.BK[i] = 0xFF
 	}
-	// However, to match the original's display, put one black pawn at 00
+	// However, to match the original's display, put one BK pawn at 00
 	// This is the "garbage" state the original shows
-	g.BK[8] = 0x00 // Black pawn at position 00
+	g.BK[8] = 0x00 // BK array pawn at position 00
 
 	// DIS1, DIS2, DIS3 start at 0x00 (uninitialized state)
 	// DIS1 will be set to 0xFF after 4th digit when piece is found
@@ -164,11 +166,11 @@ func NewGame(out io.Writer) *GameState {
 // SetupBoard initializes the board to the starting position.
 // This is equivalent to the SETUP routine (assembly line 665).
 func (g *GameState) SetupBoard() {
-	// Copy white pieces
+	// Copy Board array pieces (bottom of board, ranks 0-1)
 	for i := 0; i < 16; i++ {
 		g.Board[i] = InitialSetup[i]
 	}
-	// Copy black pieces (with coordinate transformation)
+	// Copy BK array pieces (top of board, ranks 6-7)
 	for i := 0; i < 16; i++ {
 		g.BK[i] = InitialSetup[i+16]
 	}
@@ -205,23 +207,23 @@ func GetPieceChar(piece Piece, isWhite bool) string {
 
 // FindPieceAt returns which piece (if any) is at the given square.
 // Returns the piece index and true if found, or NoPiece and false if empty.
-// The isWhite flag indicates the COLOR TO DISPLAY (which depends on Reversed flag).
+// The isWhite flag indicates the COLOR TO DISPLAY (white/black) which depends on Reversed flag.
 //
 // In the original assembly (POUT line 750), when REV flag is set, it uses different
-// color characters (cpl+16 vs cpl) to flip white<->black display.
+// color characters (cpl+16 vs cpl) to flip the white/black display.
 func (g *GameState) FindPieceAt(sq board.Square) (piece Piece, found bool, isWhite bool) {
-	// Check pieces in BOARD array
+	// Check pieces in Board array (bottom of board initially)
 	for i := Piece(0); i < 16; i++ {
 		if g.Board[i] == sq {
-			// BOARD pieces are displayed as WHITE when REV=0, BLACK when REV!=0
+			// Board pieces display as white when REV=0, black when REV!=0
 			// This matches assembly line 750: REV flag determines color character used
 			return i, true, !g.Reversed // piece, found, isWhite=(REV==0)
 		}
 	}
-	// Check pieces in BK array
+	// Check pieces in BK array (top of board initially)
 	for i := Piece(0); i < 16; i++ {
 		if g.BK[i] == sq {
-			// BK pieces are displayed as BLACK when REV=0, WHITE when REV!=0
+			// BK pieces display as black when REV=0, white when REV!=0
 			return i, true, g.Reversed // piece, found, isWhite=(REV!=0)
 		}
 	}
@@ -403,10 +405,10 @@ func (g *GameState) ExecuteMove() {
 		// Mark piece as captured by setting position to 0xCC (off-board sentinel)
 		// Assembly line 527: STA BOARD,X (stores $CC into captured piece's position)
 		if capturedPiece < 16 {
-			// White piece (indices 0-15)
+			// Board array piece (indices 0-15)
 			g.Board[capturedPiece] = 0xCC
 		} else {
-			// Black piece (indices 16-31, stored in BK[0-15])
+			// BK array piece (indices 16-31, stored in BK[0-15])
 			g.BK[capturedPiece-16] = 0xCC
 		}
 	}
@@ -414,10 +416,10 @@ func (g *GameState) ExecuteMove() {
 	// Move the selected piece to target square
 	// Assembly line 535: STA BOARD,X (stores SQUARE into PIECE's position)
 	if g.SelectedPiece < 16 {
-		// White piece (indices 0-15)
+		// Board array piece (indices 0-15)
 		g.Board[g.SelectedPiece] = targetSquare
 	} else {
-		// Black piece (indices 16-31, stored in BK[0-15])
+		// BK array piece (indices 16-31, stored in BK[0-15])
 		g.BK[g.SelectedPiece-16] = targetSquare
 	}
 
@@ -443,14 +445,14 @@ func (g *GameState) ExecuteMove() {
 // Assembly searches from X=$1F down to X=$00, checking both BOARD and BK arrays.
 // For Phase 4, we only search the current player's Board array.
 func (g *GameState) FindPieceAtSquare(sq board.Square) Piece {
-	// Search Board array (indices 0-15) - white pieces
+	// Search Board array (indices 0-15) - pieces at bottom initially
 	for piece := Piece(0); piece < 16; piece++ {
 		if g.Board[piece] == sq {
 			return piece
 		}
 	}
-	// Search BK array (indices 0-15) - black pieces
-	// Return piece index + 16 to match assembly convention (black pieces are 0x10-0x1F)
+	// Search BK array (indices 0-15) - pieces at top initially
+	// Return piece index + 16 to match assembly convention (BK pieces are 0x10-0x1F)
 	for piece := Piece(0); piece < 16; piece++ {
 		if g.BK[piece] == sq {
 			return piece + 16
