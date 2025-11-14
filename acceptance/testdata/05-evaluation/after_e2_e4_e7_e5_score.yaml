@@ -25,9 +25,9 @@ steps:
        00 01 02 03 04 05 06 07
       FF 64 44
 
-      Position Evaluation: 208
-      Mobility: W=29 B=29
-      Max Capture: W=0 B=0
-      Capture Count: W=0 B=0
+      Position Evaluation: d0
+#      Mobility: W=29 B=29
+#      Max Capture: W=0 B=0
+#      Capture Count: W=0 B=0
 
   - commands: "Q"

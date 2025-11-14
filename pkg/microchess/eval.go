@@ -335,12 +335,11 @@ func (g *GameState) ShowEvaluation() {
 	// Display the board first
 	g.Display()
 
-	// Then display evaluation breakdown (after the board, like 'L' command does)
-	// This ensures extractLastDisplay() in tests captures both board and evaluation
-	_, _ = fmt.Fprintf(g.out, "Position Evaluation: %d\r\n", score)
-	_, _ = fmt.Fprintf(g.out, "Mobility: W=%d B=%d\r\n", g.WMOB, g.BMOB)
-	_, _ = fmt.Fprintf(g.out, "Max Capture: W=%d B=%d\r\n", g.WMAXC, g.BMAXC)
-	_, _ = fmt.Fprintf(g.out, "Capture Count: W=%d B=%d\r\n", g.WCC, g.BMCC)
+	// Then display evaluation breakdown
+	_, _ = fmt.Fprintf(g.out, "Position Evaluation: %x\r\n", score)
+	//_, _ = fmt.Fprintf(g.out, "Mobility: W=%d B=%d\r\n", g.WMOB, g.BMOB)
+	//_, _ = fmt.Fprintf(g.out, "Max Capture: W=%d B=%d\r\n", g.WMAXC, g.BMAXC)
+	//_, _ = fmt.Fprintf(g.out, "Capture Count: W=%d B=%d\r\n", g.WCC, g.BMCC)
 
 	// Restore state
 	g.State = savedState

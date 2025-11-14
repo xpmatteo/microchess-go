@@ -69,10 +69,10 @@ steps:
        00 01 02 03 04 05 06 07
       CC CC CC
 
-      Position Evaluation: 208
-      Mobility: W=20 B=20
-      Max Capture: W=0 B=0
-      Capture Count: W=0 B=0
+      Position Evaluation: d0
+#      Mobility: W=20 B=20
+#      Max Capture: W=0 B=0
+#      Capture Count: W=0 B=0
 
   - commands: "Q"
     should_continue: false
