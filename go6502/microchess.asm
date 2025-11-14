@@ -563,6 +563,15 @@ PUSH            CMP     BESTV           ; IS THIS BEST
                 BCC     RETP            ; MOVE SO FAR?
                 BEQ     RETP
                 STA     BESTV           ; YES!
+; 2025 extension: print the current best move and score
+                LDX     PIECE
+                LDA     BOARD,X
+                TAX
+                LDA     SQUARE
+                TAY
+                LDA     BESTV
+                JSR     PRINT_SCORE
+; end 2025 print_score extension
                 LDA     PIECE           ; SAVE IT
                 STA     BESTP
                 LDA     SQUARE
@@ -691,8 +700,28 @@ POS             LSR
                 BPL     NOPOSN
 POSN            CLC
                 ADC     #$02
-NOPOSN  JMP     CKMATE                  ; CONTINUE
+NOPOSN          JMP     CKMATE                  ; CONTINUE
 
+; 2025 print_score extension
+PRINT_SCORE     PHA                     ; save score
+                TYA
+                PHA                     ; save to square
+                TXA
+                PHA                     ; save from square
+                JSR     POUT9
+                PLA                     ; from square
+                JSR     syshexout
+                LDA     #' '
+                JSR     syschout
+                PLA                     ; to square
+                JSR     syshexout
+                LDA     #' '
+                JSR     syschout
+                PLA                     ; score
+                JSR     syshexout
+                JSR     POUT9
+                RTS
+; end 2025 print_score extension
 
 ;-----------------------------------------------------------------
 ; The following routines were added to allow text-based board
