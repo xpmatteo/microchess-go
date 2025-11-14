@@ -174,7 +174,8 @@ func (g *GameState) SetupBoard() {
 	for i := 0; i < 16; i++ {
 		g.BK[i] = InitialSetup[i+16]
 	}
-	g.Reversed = false
+	// NOTE: The Reversed flag is NOT reset here. The original assembly SETUP routine
+	// (line 116-126) does not modify the REV flag. Only the REVERSE routine toggles it.
 }
 
 // GetPieceChar returns a character representation of a piece at a square.
