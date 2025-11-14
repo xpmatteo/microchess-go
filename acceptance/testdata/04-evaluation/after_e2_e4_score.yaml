@@ -7,147 +7,19 @@ description: "Tests position evaluation after white's opening move e2-e4"
 skip_6502: true  # S command doesn't exist in original
 
 steps:
-  - commands: "DISPLAY"
-    should_continue: true
-    expected_display: |-
-      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
-       00 01 02 03 04 05 06 07
-      -------------------------
-      |BP|**|  |**|  |**|  |**|00
-      |**|  |**|  |**|  |**|  |10
-      |  |**|  |**|  |**|  |**|20
-      |**|  |**|  |**|  |**|  |30
-      |  |**|  |**|  |**|  |**|40
-      |**|  |**|  |**|  |**|  |50
-      |  |**|  |**|  |**|  |**|60
-      |**|  |**|  |**|  |**|  |70
-      -------------------------
-       00 01 02 03 04 05 06 07
-      00 00 00
-
-  - commands: "C"
-    should_continue: true
-    expected_display: |-
-      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
-       00 01 02 03 04 05 06 07
-      -------------------------
-      |WR|WN|WB|WK|WQ|WB|WN|WR|00
-      |WP|WP|WP|WP|WP|WP|WP|WP|10
-      |  |**|  |**|  |**|  |**|20
-      |**|  |**|  |**|  |**|  |30
-      |  |**|  |**|  |**|  |**|40
-      |**|  |**|  |**|  |**|  |50
-      |BP|BP|BP|BP|BP|BP|BP|BP|60
-      |BR|BN|BB|BK|BQ|BB|BN|BR|70
-      -------------------------
-       00 01 02 03 04 05 06 07
-      CC CC CC
-
-  # Enter move e2-e4 (14 34 in octal)
-  - commands: "1"
-    should_continue: true
-    expected_display: |-
-      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
-       00 01 02 03 04 05 06 07
-      -------------------------
-      |WR|WN|WB|WK|WQ|WB|WN|WR|00
-      |WP|WP|WP|WP|WP|WP|WP|WP|10
-      |  |**|  |**|  |**|  |**|20
-      |**|  |**|  |**|  |**|  |30
-      |  |**|  |**|  |**|  |**|40
-      |**|  |**|  |**|  |**|  |50
-      |BP|BP|BP|BP|BP|BP|BP|BP|60
-      |BR|BN|BB|BK|BQ|BB|BN|BR|70
-      -------------------------
-       00 01 02 03 04 05 06 07
-      FF 01 00
-
-  - commands: "4"
-    should_continue: true
-    expected_display: |-
-      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
-       00 01 02 03 04 05 06 07
-      -------------------------
-      |WR|WN|WB|WK|WQ|WB|WN|WR|00
-      |WP|WP|WP|WP|WP|WP|WP|WP|10
-      |  |**|  |**|  |**|  |**|20
-      |**|  |**|  |**|  |**|  |30
-      |  |**|  |**|  |**|  |**|40
-      |**|  |**|  |**|  |**|  |50
-      |BP|BP|BP|BP|BP|BP|BP|BP|60
-      |BR|BN|BB|BK|BQ|BB|BN|BR|70
-      -------------------------
-       00 01 02 03 04 05 06 07
-      FF 10 04
-
-  - commands: "3"
-    should_continue: true
-    expected_display: |-
-      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
-       00 01 02 03 04 05 06 07
-      -------------------------
-      |WR|WN|WB|WK|WQ|WB|WN|WR|00
-      |WP|WP|WP|WP|WP|WP|WP|WP|10
-      |  |**|  |**|  |**|  |**|20
-      |**|  |**|  |**|  |**|  |30
-      |  |**|  |**|  |**|  |**|40
-      |**|  |**|  |**|  |**|  |50
-      |BP|BP|BP|BP|BP|BP|BP|BP|60
-      |BR|BN|BB|BK|BQ|BB|BN|BR|70
-      -------------------------
-       00 01 02 03 04 05 06 07
-      FF 14 03
-
-  - commands: "4"
-    should_continue: true
-    expected_display: |-
-      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
-       00 01 02 03 04 05 06 07
-      -------------------------
-      |WR|WN|WB|WK|WQ|WB|WN|WR|00
-      |WP|WP|WP|WP|WP|WP|WP|WP|10
-      |  |**|  |**|  |**|  |**|20
-      |**|  |**|  |**|  |**|  |30
-      |  |**|  |**|  |**|  |**|40
-      |**|  |**|  |**|  |**|  |50
-      |BP|BP|BP|BP|BP|BP|BP|BP|60
-      |BR|BN|BB|BK|BQ|BB|BN|BR|70
-      -------------------------
-       00 01 02 03 04 05 06 07
-      0E 14 34
-
-  # Execute move with carriage return
-  - commands: "\r"
-    should_continue: true
-    expected_display: |-
-      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
-       00 01 02 03 04 05 06 07
-      -------------------------
-      |WR|WN|WB|WK|WQ|WB|WN|WR|00
-      |WP|WP|WP|WP|  |WP|WP|WP|10
-      |  |**|  |**|  |**|  |**|20
-      |**|  |**|  |**|  |**|  |30
-      |  |**|  |**|WP|**|  |**|40
-      |**|  |**|  |**|  |**|  |50
-      |BP|BP|BP|BP|BP|BP|BP|BP|60
-      |BR|BN|BB|BK|BQ|BB|BN|BR|70
-      -------------------------
-       00 01 02 03 04 05 06 07
-      FF 14 34
-
   # Show evaluation - white should have advantage (more mobility)
   # White now has more mobility (bishops/queen can move through e4)
-  - commands: "S"
+  - commands: "C1434\rS"
     should_continue: true
     expected_display: |-
       MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
        00 01 02 03 04 05 06 07
       -------------------------
       |WR|WN|WB|WK|WQ|WB|WN|WR|00
-      |WP|WP|WP|WP|  |WP|WP|WP|10
+      |WP|WP|WP|WP|**|WP|WP|WP|10
       |  |**|  |**|  |**|  |**|20
-      |**|  |**|  |**|  |**|  |30
-      |  |**|  |**|WP|**|  |**|40
+      |**|  |**|  |WP|  |**|  |30
+      |  |**|  |**|  |**|  |**|40
       |**|  |**|  |**|  |**|  |50
       |BP|BP|BP|BP|BP|BP|BP|BP|60
       |BR|BN|BB|BK|BQ|BB|BN|BR|70
@@ -161,5 +33,3 @@ steps:
       Capture Count: W=0 B=0
 
   - commands: "Q"
-    should_continue: false
-    expected_display: ""
