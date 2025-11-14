@@ -5,15 +5,15 @@ package acceptance
 
 import (
 	"bytes"
+	"github.com/matteo/microchess-go/pkg/microchess"
+	"github.com/pmezard/go-difflib/difflib"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
-
-	"github.com/matteo/microchess-go/pkg/microchess"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
 )
 
 // testCase represents a complete test scenario with multiple steps
@@ -127,8 +127,22 @@ func runTestCase(t *testing.T, tc testCase) {
 
 		// Not using testify for this assertion, so that we produce a more readable error message
 		if expected != actual {
-			t.Errorf("Step %d (%s): Display mismatch\n=== EXPECTED ===\n%s\n=== ACTUAL (Go) ===\n%s\n=== END ===",
-				i, step.Commands, expected, actual)
+			// show full screen for clarity
+			t.Errorf(
+				"Step %d (%s): Display mismatch\n"+
+					"=== EXPECTED ===\n"+
+					"%s\n"+
+					"=== ACTUAL (Go) ===\n"+
+					"%s\n"+
+					"=== END ===\n\n"+
+					"Diff:\n"+
+					"%s\n",
+				i,
+				step.Commands,
+				expected,
+				actual,
+				Diff(expected, actual),
+			)
 		}
 	}
 
@@ -165,4 +179,18 @@ func filterCommentLines(input string) string {
 		}
 	}
 	return strings.Join(filtered, "\n")
+}
+
+func Diff(expected string, actual string) string {
+	diff, _ := difflib.GetUnifiedDiffString(difflib.UnifiedDiff{
+		A:        difflib.SplitLines(expected),
+		B:        difflib.SplitLines(actual),
+		FromFile: "Expected",
+		FromDate: "",
+		ToFile:   "Actual",
+		ToDate:   "",
+		Context:  1,
+	})
+
+	return diff
 }

@@ -1,0 +1,47 @@
+name: "Exposing king to check is illegal"
+skip_6502: true  # L command doesn't exist in original
+steps:
+  - commands: "C7636\r"
+    should_continue: true
+    expected_display: |-
+      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
+       00 01 02 03 04 05 06 07
+      -------------------------
+      |WR|WN|WB|WK|WQ|WB|WN|WR|00
+      |WP|WP|WP|WP|WP|WP|WP|WP|10
+      |  |**|  |**|  |**|  |**|20
+      |**|  |**|  |**|  |BN|  |30
+      |  |**|  |**|  |**|  |**|40
+      |**|  |**|  |**|  |**|  |50
+      |BP|BP|BP|BP|BP|BP|BP|BP|60
+      |BR|BN|BB|BK|BQ|BB|**|BR|70
+      -------------------------
+       00 01 02 03 04 05 06 07
+      FF 76 36
+
+  - commands: "L"
+    should_continue: true
+    expected_display: |-
+      # Pawns
+      - 13 23
+      - 13 33
+      # illegal: check - 14 24
+      # illegal: check - 14 34
+      - 15 25
+      - 15 35
+      - 12 22
+      - 12 32
+      - 16 26
+      # illegal: pawn cannot capture this way - 16 36
+      - 11 21
+      - 11 31
+      - 17 27
+      - 17 37
+      - 10 20
+      - 10 30
+      # Knights (pieces 7 and 6) - can jump over pawns
+      - 06 27
+      - 06 25
+      - 01 22
+      - 01 20
+  - commands: "Q"

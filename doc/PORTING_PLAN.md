@@ -214,7 +214,7 @@ go run cmd/microchess/main.go
 
 ---
 
-### ⬜ Phase 5: Legal Move Generation (Show All Moves!)
+### ✅ Phase 5: Legal Move Generation (Show All Moves!) - COMPLETED
 
 **Goal**: Generate and display all legal moves for a position
 

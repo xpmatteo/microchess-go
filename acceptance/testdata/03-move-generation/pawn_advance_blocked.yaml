@@ -1,0 +1,51 @@
+name: "Pawn advance is blocked"
+skip_6502: true  # L command doesn't exist in original
+steps:
+  - commands: "C6636\r6121\r"
+    should_continue: true
+    expected_display: |-
+      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
+       00 01 02 03 04 05 06 07
+      -------------------------
+      |WR|WN|WB|WK|WQ|WB|WN|WR|00
+      |WP|WP|WP|WP|WP|WP|WP|WP|10
+      |  |BP|  |**|  |**|  |**|20
+      |**|  |**|  |**|  |BP|  |30
+      |  |**|  |**|  |**|  |**|40
+      |**|  |**|  |**|  |**|  |50
+      |BP|**|BP|BP|BP|BP|  |BP|60
+      |BR|BN|BB|BK|BQ|BB|BN|BR|70
+      -------------------------
+       00 01 02 03 04 05 06 07
+      FF 61 21
+
+  - commands: "L"
+    should_continue: true
+    expected_display: |-
+      # Pawns
+      - 13 23
+      - 13 33
+      - 14 24
+      - 14 34
+      - 15 25
+      - 15 35
+      # pawn can capture
+      - 12 21
+      - 12 22
+      - 12 32
+      - 16 26
+      # illegal: pawn advance blocked - 16 36
+      # illegal: pawn advance blocked - 11 21
+      # illegal: pawn advance blocked- 11 31
+      - 17 27
+      - 17 37
+      # pawn can capture
+      - 10 21
+      - 10 20
+      - 10 30
+      # Knights (pieces 7 and 6) - can jump over pawns
+      - 06 27
+      - 06 25
+      - 01 22
+      - 01 20
+  - commands: "Q"
