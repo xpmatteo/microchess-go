@@ -1,0 +1,91 @@
+# Test evaluation after white plays e2-e4 and black responds e7-e5
+# Expected: Position should be balanced again (both sides control center)
+
+name: "Evaluation After e2-e4 e7-e5"
+description: "Tests position evaluation after symmetric center pawn moves"
+skip_6502: true  # S command doesn't exist in original
+
+steps:
+  - commands: "C"
+    should_continue: true
+    expected_display: |-
+      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
+       00 01 02 03 04 05 06 07
+      -------------------------
+      |WR|WN|WB|WK|WQ|WB|WN|WR|00
+      |WP|WP|WP|WP|WP|WP|WP|WP|10
+      |  |**|  |**|  |**|  |**|20
+      |**|  |**|  |**|  |**|  |30
+      |  |**|  |**|  |**|  |**|40
+      |**|  |**|  |**|  |**|  |50
+      |BP|BP|BP|BP|BP|BP|BP|BP|60
+      |BR|BN|BB|BK|BQ|BB|BN|BR|70
+      -------------------------
+       00 01 02 03 04 05 06 07
+      CC CC CC
+
+  # White plays e2-e4
+  - commands: "1434\r"
+    should_continue: true
+    expected_display: |-
+      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
+       00 01 02 03 04 05 06 07
+      -------------------------
+      |WR|WN|WB|WK|WQ|WB|WN|WR|00
+      |WP|WP|WP|WP|**|WP|WP|WP|10
+      |  |**|  |**|  |**|  |**|20
+      |**|  |**|  |WP|  |**|  |30
+      |  |**|  |**|  |**|  |**|40
+      |**|  |**|  |**|  |**|  |50
+      |BP|BP|BP|BP|BP|BP|BP|BP|60
+      |BR|BN|BB|BK|BQ|BB|BN|BR|70
+      -------------------------
+       00 01 02 03 04 05 06 07
+      FF 14 34
+
+  # Black plays e7-e5
+  - commands: "6444\r"
+    should_continue: true
+    expected_display: |-
+      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
+       00 01 02 03 04 05 06 07
+      -------------------------
+      |WR|WN|WB|WK|WQ|WB|WN|WR|00
+      |WP|WP|WP|WP|**|WP|WP|WP|10
+      |  |**|  |**|  |**|  |**|20
+      |**|  |**|  |WP|  |**|  |30
+      |  |**|  |**|BP|**|  |**|40
+      |**|  |**|  |**|  |**|  |50
+      |BP|BP|BP|BP|**|BP|BP|BP|60
+      |BR|BN|BB|BK|BQ|BB|BN|BR|70
+      -------------------------
+       00 01 02 03 04 05 06 07
+      FF 64 44
+
+  # Show evaluation - should be balanced (both have center control)
+  - commands: "S"
+    should_continue: true
+    expected_display: |-
+      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
+       00 01 02 03 04 05 06 07
+      -------------------------
+      |WR|WN|WB|WK|WQ|WB|WN|WR|00
+      |WP|WP|WP|WP|**|WP|WP|WP|10
+      |  |**|  |**|  |**|  |**|20
+      |**|  |**|  |WP|  |**|  |30
+      |  |**|  |**|BP|**|  |**|40
+      |**|  |**|  |**|  |**|  |50
+      |BP|BP|BP|BP|**|BP|BP|BP|60
+      |BR|BN|BB|BK|BQ|BB|BN|BR|70
+      -------------------------
+       00 01 02 03 04 05 06 07
+      FF 64 44
+
+      Position Evaluation: 208
+      Mobility: W=29 B=29
+      Max Capture: W=0 B=0
+      Capture Count: W=0 B=0
+
+  - commands: "Q"
+    should_continue: false
+    expected_display: ""

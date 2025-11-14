@@ -1,0 +1,79 @@
+# Test evaluation of initial chess position
+# The 'S' command is NEW (not in original 6502) - shows position evaluation
+#
+# Expected: Initial position should be roughly equal (score near 128)
+# The exact score depends on mobility counting and evaluation formula
+
+name: "Initial Position Evaluation"
+description: "Tests position evaluation (S command) on starting position"
+skip_6502: true  # S command doesn't exist in original
+
+steps:
+  - commands: "DISPLAY"
+    should_continue: true
+    expected_display: |-
+      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
+       00 01 02 03 04 05 06 07
+      -------------------------
+      |BP|**|  |**|  |**|  |**|00
+      |**|  |**|  |**|  |**|  |10
+      |  |**|  |**|  |**|  |**|20
+      |**|  |**|  |**|  |**|  |30
+      |  |**|  |**|  |**|  |**|40
+      |**|  |**|  |**|  |**|  |50
+      |  |**|  |**|  |**|  |**|60
+      |**|  |**|  |**|  |**|  |70
+      -------------------------
+       00 01 02 03 04 05 06 07
+      00 00 00
+
+  - commands: "C"
+    should_continue: true
+    expected_display: |-
+      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
+       00 01 02 03 04 05 06 07
+      -------------------------
+      |WR|WN|WB|WK|WQ|WB|WN|WR|00
+      |WP|WP|WP|WP|WP|WP|WP|WP|10
+      |  |**|  |**|  |**|  |**|20
+      |**|  |**|  |**|  |**|  |30
+      |  |**|  |**|  |**|  |**|40
+      |**|  |**|  |**|  |**|  |50
+      |BP|BP|BP|BP|BP|BP|BP|BP|60
+      |BR|BN|BB|BK|BQ|BB|BN|BR|70
+      -------------------------
+       00 01 02 03 04 05 06 07
+      CC CC CC
+
+  # Note: The 'S' command output will show evaluation details
+  # Expected values for initial position (symmetric, balanced):
+  # - White mobility (WMOB): 20 moves (8 pawns x2, 2 knights x2)
+  # - Black mobility (BMOB): 20 moves (same)
+  # - Both sides have same captures/threats
+  # - Score should be near 128 (neutral, defined as $80 = 128 in STRATGY)
+  - commands: "S"
+    should_continue: true
+    expected_display: |-
+      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
+       00 01 02 03 04 05 06 07
+      -------------------------
+      |WR|WN|WB|WK|WQ|WB|WN|WR|00
+      |WP|WP|WP|WP|WP|WP|WP|WP|10
+      |  |**|  |**|  |**|  |**|20
+      |**|  |**|  |**|  |**|  |30
+      |  |**|  |**|  |**|  |**|40
+      |**|  |**|  |**|  |**|  |50
+      |BP|BP|BP|BP|BP|BP|BP|BP|60
+      |BR|BN|BB|BK|BQ|BB|BN|BR|70
+      -------------------------
+       00 01 02 03 04 05 06 07
+      CC CC CC
+
+      Position Evaluation: 208
+      Mobility: W=20 B=20
+      Max Capture: W=0 B=0
+      Capture Count: W=0 B=0
+
+  - commands: "Q"
+    should_continue: false
+    expected_display: ""

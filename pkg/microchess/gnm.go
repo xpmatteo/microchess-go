@@ -90,13 +90,19 @@ func (g *GameState) singleMove(callback MoveCallback) bool {
 
 	// If legal (not illegal and not in check), process the move
 	if !result.Illegal && !result.InCheck {
-		// JANUS check detection: If STATE==-7, check if this move attacks the king
-		// If so, set InChek=0x00 and skip callback (assembly lines 223-234)
-		if !g.janusCheckDetection() {
-			// Not in check detection mode, call normal callback (if provided)
-			if callback != nil {
-				callback(fromSquare, g.MoveSquare, g.MovePiece)
-			}
+		// JANUS routing (assembly line 162-234)
+		// Routes based on STATE value to different analysis functions
+		if g.janusCheckDetection() {
+			// STATE == -7: Check detection mode
+			// janusCheckDetection() sets InChek if king can be captured
+		} else if callback != nil {
+			// User mode (e.g., 'L' command): call provided callback
+			// Check callback first so it takes priority over COUNTS
+			callback(fromSquare, g.MoveSquare, g.MovePiece)
+		} else if g.State >= 0 && g.State <= 12 {
+			// STATE in range 0-12: Call COUNTS for evaluation
+			// This is the JANUS -> COUNTS path (assembly line 169)
+			g.COUNTS(result.Capture)
 		}
 	}
 
@@ -148,13 +154,15 @@ func (g *GameState) slidingLine(callback MoveCallback) bool {
 			break
 		}
 
-		// Legal move - process it
-		// JANUS check detection: If STATE==-7, check if this move attacks the king
-		if !g.janusCheckDetection() {
-			// Not in check detection mode, call normal callback (if provided)
-			if callback != nil {
-				callback(fromSquare, g.MoveSquare, g.MovePiece)
-			}
+		// Legal move - process it via JANUS routing
+		if g.janusCheckDetection() {
+			// STATE == -7: Check detection mode
+		} else if callback != nil {
+			// User mode: call provided callback (check callback first)
+			callback(fromSquare, g.MoveSquare, g.MovePiece)
+		} else if g.State >= 0 && g.State <= 12 {
+			// STATE in range 0-12: Call COUNTS for evaluation
+			g.COUNTS(result.Capture)
 		}
 
 		// If capture, stop sliding (assembly: BVC LINE - branch if V clear)
@@ -300,11 +308,13 @@ func (g *GameState) generatePawnMoves(callback MoveCallback) {
 	g.MoveN = 6
 	result := g.CMOVE(g.MoveSquare, g.MoveN)
 	if result.Capture && !result.Illegal && !result.InCheck {
-		// JANUS check detection
-		if !g.janusCheckDetection() {
-			if callback != nil {
-				callback(fromSquare, g.MoveSquare, g.MovePiece)
-			}
+		// JANUS routing
+		if g.janusCheckDetection() {
+			// Check detection mode
+		} else if callback != nil {
+			callback(fromSquare, g.MoveSquare, g.MovePiece)
+		} else if g.State >= 0 && g.State <= 12 {
+			g.COUNTS(result.Capture)
 		}
 	}
 
@@ -313,11 +323,13 @@ func (g *GameState) generatePawnMoves(callback MoveCallback) {
 	g.MoveN = 5
 	result = g.CMOVE(g.MoveSquare, g.MoveN)
 	if result.Capture && !result.Illegal && !result.InCheck {
-		// JANUS check detection
-		if !g.janusCheckDetection() {
-			if callback != nil {
-				callback(fromSquare, g.MoveSquare, g.MovePiece)
-			}
+		// JANUS routing
+		if g.janusCheckDetection() {
+			// Check detection mode
+		} else if callback != nil {
+			callback(fromSquare, g.MoveSquare, g.MovePiece)
+		} else if g.State >= 0 && g.State <= 12 {
+			g.COUNTS(result.Capture)
 		}
 	}
 
@@ -333,12 +345,13 @@ func (g *GameState) generatePawnMoves(callback MoveCallback) {
 			break
 		}
 
-		// Legal forward move
-		// JANUS check detection
-		if !g.janusCheckDetection() {
-			if callback != nil {
-				callback(fromSquare, g.MoveSquare, g.MovePiece)
-			}
+		// Legal forward move - JANUS routing
+		if g.janusCheckDetection() {
+			// Check detection mode
+		} else if callback != nil {
+			callback(fromSquare, g.MoveSquare, g.MovePiece)
+		} else if g.State >= 0 && g.State <= 12 {
+			g.COUNTS(result.Capture)
 		}
 
 		// Check if on rank 2 (can do double move)

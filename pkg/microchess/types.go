@@ -84,6 +84,39 @@ type GameState struct {
 	// Used by MOVE/UMOVE to make and unmake trial moves during CHKCHK
 	MoveHistory []MoveRecord
 
+	// Evaluation counters (assembly: COUNT array at $DE-$EE)
+	// These track mobility, captures, and threats for position evaluation.
+	// Indexed by STATE value offset (e.g., STATE=4 uses index 4).
+	// Assembly reference: doc/DATA_STRUCTURES.md lines 140-173
+	Mobility      [16]uint8 // MOB: Legal move count per state
+	MaxCapture    [16]uint8 // MAXC: Highest value piece capturable per state
+	CaptureCount  [16]uint8 // CC: Total capture count per state
+	PieceCaptured [16]Piece // PCAP: Index of best capturable piece per state
+
+	// Named counter instances for key positions (assembly: $EB-$EE, $E3-$E6, $EF-$F2)
+	// These are aliases into the arrays above for specific STATE values
+	// Assembly reference: doc/DATA_STRUCTURES.md lines 143-158
+	WMOB, WMAXC, WCC uint8 // White's mobility/captures/count (STATE=11)
+	WMAXP            Piece // White's best capturable piece
+	BMOB, BMAXC, BMCC uint8 // Black's mobility/captures/count (STATE=3)
+	BMAXP             Piece // Black's best capturable piece
+	PMOB, PMAXC, PCC uint8 // Position mobility/captures/count (STATE=15)
+	PCP              Piece // Position captured piece
+
+	// Capture depth counters (assembly: $DD-$E2)
+	// Track captured piece values at different search depths
+	// Assembly reference: doc/DATA_STRUCTURES.md lines 160-171
+	WCAP0, WCAP1, WCAP2 uint8 // White's captures at depths 0,1,2
+	BCAP0, BCAP1, BCAP2 uint8 // Black's captures at depths 0,1,2
+	XMAXC               uint8 // Saved maximum capture value (assembly: $E8)
+
+	// Best move tracking (assembly: BESTP/$FB, BESTV/$FA, BESTM/$F9)
+	// Note: These overlap with DIS1/DIS2/DIS3 in assembly to save page zero space
+	// Assembly reference: doc/DATA_STRUCTURES.md lines 176-189
+	BestPiece  Piece        // Best piece to move (piece index 0-15)
+	BestValue  uint8        // Best move evaluation score
+	BestSquare board.Square // Best destination square
+
 	// I/O for display and input
 	out io.Writer
 }
@@ -137,6 +170,30 @@ var MOVEX = [17]int8{
 	0x0E,  // 14: knight up-right-right
 	0x1F,  // 15: knight up-up-left
 	0x21,  // 16: knight up-up-right
+}
+
+// POINTS is the piece value table used for capture evaluation.
+// This matches the POINTS table from assembly (line 878-879).
+//
+// Values represent the relative worth of each piece:
+//   - King: 11 (special value, effectively infinite)
+//   - Queen: 10
+//   - Rook: 6
+//   - Bishop: 4
+//   - Knight: 4
+//   - Pawn: 2
+//
+// These values are used by COUNTS to evaluate captures and by STRATGY
+// for material balance calculation.
+//
+// Assembly reference: line 878-879 (POINTS table)
+var POINTS = [16]uint8{
+	11,              // 0: King (special - should never be captured)
+	10,              // 1: Queen
+	6, 6,            // 2-3: Rooks
+	4, 4,            // 4-5: Bishops
+	4, 4,            // 6-7: Knights
+	2, 2, 2, 2, 2, 2, 2, 2, // 8-15: Pawns
 }
 
 // InitialSetup contains the starting positions for all pieces.
@@ -327,6 +384,12 @@ func (g *GameState) HandleCharacter(char byte) bool {
 		// List legal moves (NEW command - not in original)
 		_, _ = fmt.Fprintln(g.out, "\r") // Clean newline after echoed 'L'
 		g.ListLegalMoves()
+		return true
+
+	case 'S':
+		// Show position evaluation (NEW command - not in original)
+		_, _ = fmt.Fprintln(g.out, "\r") // Clean newline after echoed 'S'
+		g.ShowEvaluation()
 		return true
 
 	case '\r', '\n':
