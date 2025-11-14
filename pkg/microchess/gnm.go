@@ -354,6 +354,28 @@ func (g *GameState) generatePawnMoves(callback MoveCallback) {
 // GNM (Generate New Move) generates all pseudo-legal moves for the current side.
 // This implements the main GNM routine from assembly line 286.
 //
+// INPUTS (GameState fields read):
+//   - Board[0..15]: Current positions of all pieces (set by RESET for each piece)
+//   - State: Controls behavior (-7 = check detection mode, other values = normal move generation)
+//   - BK[0]: King position (used when State == -7 for check detection)
+//
+// OUTPUTS (GameState fields modified):
+//   - MovePiece: Iterates from 15 down to 0 (all pieces for current side)
+//   - MoveSquare: Working square updated by CMOVE as moves are generated
+//   - MoveN: Move direction index (varies by piece type: 1-8 for sliding, 9-16 for knights, etc.)
+//   - InChek: Set to 0x00 if State == -7 and a move attacks the king (check detection)
+//
+// CALLBACK INVOCATION:
+//   - callback(from, to, piece) is called for each legal move generated
+//   - NOT called when State == -7 (check detection mode only sets InChek)
+//   - If callback is nil, moves are still generated (useful for side effects like check detection)
+//
+// ALGORITHM:
+//  1. Iterates through pieces 15 down to 0 (white's pieces)
+//  2. For each piece, dispatches to appropriate move generator based on piece type
+//  3. Each move generator uses CMOVE to test moves and calls callback for legal ones
+//  4. When State == -7, janusCheckDetection sets InChek if king can be captured
+//
 // Assembly reference:
 //
 //	GNM      LDA #$10       ; Start with piece 16
