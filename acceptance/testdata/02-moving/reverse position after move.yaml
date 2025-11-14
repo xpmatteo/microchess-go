@@ -1,0 +1,38 @@
+name: "Reset board after move"
+steps:
+  - commands: "C0122\r"
+    should_continue: true
+    expected_display: |-
+      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
+       00 01 02 03 04 05 06 07
+      -------------------------
+      |WR|**|WB|WK|WQ|WB|WN|WR|00
+      |WP|WP|WP|WP|WP|WP|WP|WP|10
+      |  |**|WN|**|  |**|  |**|20
+      |**|  |**|  |**|  |**|  |30
+      |  |**|  |**|  |**|  |**|40
+      |**|  |**|  |**|  |**|  |50
+      |BP|BP|BP|BP|BP|BP|BP|BP|60
+      |BR|BN|BB|BK|BQ|BB|BN|BR|70
+      -------------------------
+       00 01 02 03 04 05 06 07
+      FF 01 22
+
+  - commands: "E"
+    should_continue: true
+    expected_display: |-
+      MicroChess (c) 1996-2005 Peter Jennings, www.benlo.com
+       00 01 02 03 04 05 06 07
+      -------------------------
+      |BR|BN|BB|BQ|BK|BB|BN|BR|00
+      |BP|BP|BP|BP|BP|BP|BP|BP|10
+      |  |**|  |**|  |**|  |**|20
+      |**|  |**|  |**|  |**|  |30
+      |  |**|  |**|  |**|  |**|40
+      |**|  |**|  |**|WN|**|  |50
+      |WP|WP|WP|WP|WP|WP|WP|WP|60
+      |WR|WN|WB|WQ|WK|WB|**|WR|70
+      -------------------------
+       00 01 02 03 04 05 06 07
+      EE EE EE
+  - commands: "Q"
